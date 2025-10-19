@@ -1,5 +1,9 @@
 # Cataract Surgery Difficulty Classification
 
+<p align="center">
+  <img src="results/Inference_Sample.png" alt="Grad-CAM visualization" width="600"/>
+</p>
+
 This repository presents a deep learning framework for automated assessment of cataract surgery difficulty from surgical microscope images. The project focuses on classifying the eye’s nuclear density — a key factor in surgical complexity — into five difficulty levels.  
 
 ---
