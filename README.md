@@ -1,60 +1,173 @@
 # Cataract Surgery Difficulty Classification
 
 <p align="center">
-  <img src="results/Inference_Sample.png" alt="Grad-CAM visualization" width="600"/>
+  <img src="results/Inference_Sample.png" alt="Example cataract severity prediction on a surgical microscope frame" width="600"/>
 </p>
 
-This repository presents a deep learning framework for automated assessment of cataract surgery difficulty from surgical microscope images. The project focuses on classifying the eye’s nuclear density — a key factor in surgical complexity — into five difficulty levels.  
+<p align="center">
+  <em>Illustrative frame-level prediction. The displayed score is not the overall classification accuracy.</em>
+</p>
+
+Deep learning experiments for assessing **cataract severity** and **poor pupil dilation** from surgical microscope images selected around the beginning of capsulorhexis.
+
+This repository contains individual CNN training notebooks, task-specific transformer benchmarks, CNN hyperparameter optimization with Optuna, and grouped K-fold evaluation implementations.
 
 ---
 
 ## Problem Overview
-Cataract surgery is one of the most frequently performed surgical procedures worldwide. The difficulty of the operation is strongly influenced by the nuclear density of the cataract, which can impact surgical time, complication risk, and required instrumentation. Manual grading is subjective and varies between surgeons, motivating the development of automated systems.
+
+Cataract severity and inadequate pupil dilation are two visual factors associated with surgical difficulty. Identifying these attributes from microscope images can support the study of surgical conditions and automated analysis of surgical video.
+
+This project investigates two separate classification tasks rather than combining all conditions into a single difficulty scale.
+
+## Classification Tasks
+
+### Cataract severity
+
+Four-class classification of cataract appearance:
+
+| Model label | Class |
+| --- | --- |
+| `0` | Low nuclear density |
+| `1` | Dense |
+| `2` | Mature |
+| `3` | Brunescent |
+
+### Poor pupil dilation
+
+Binary classification of pupil dilation:
+
+| Model label | Class |
+| --- | --- |
+| `0` | Normal dilation |
+| `1` | Poor dilation |
+
+Poor dilation is a separate task, not a fifth cataract severity class. The values above are zero-based model labels; original metadata may represent classes using one-hot columns.
 
 ---
 
 ## Dataset
-A custom dataset of **4,000 surgical microscope frames** was curated, evenly distributed across five difficulty classes:
 
-1. **Low nuclear density** – red reflex fully visible  
-2. **Moderate nuclear density** – partial red reflex visible  
-3. **High nuclear density** – red reflex not visible  
-4. **Mature cataract** – cortex layer appears milky white, nuclear structure obscured  
-5. **Poor dilation** – constricted iris, sometimes with mechanical retractors  
+The experiments use annotated surgical microscope frames with task-specific labels and source-video identifiers.
 
-Images were sampled directly from the operating microscope during the cataract surgery workflow.  
-Due to clinical restrictions, the dataset cannot be released publicly.  
+Frames originating from the same video are kept together during data partitioning. This prevents frames from a recorded video from appearing in both training and held-out partitions.
+
+Required metadata formats, image layouts, and data-source settings are documented in the corresponding experiment folders. Image archives and metadata are obtained separately from the repository.
+
+A Hugging Face dataset link will be added when the dataset release is available.
 
 ---
 
 ## Methods
-We explored both convolutional and transformer-based architectures using transfer learning:
 
-- **CNN-based models:**  
-  ResNet-18, ResNet-50, EfficientNet-B0 to B5, DenseNet-121/169, VGG-16/19  
+The project evaluates pretrained convolutional neural networks and vision transformers through transfer learning.
 
-- **Transformer-based models:**  
-  Swin Transformer, DeiT, ConvNeXt  
+### Convolutional neural networks
 
-Each model was trained and evaluated under identical preprocessing and augmentation protocols, and benchmarked for both classification performance and computational efficiency (GPU/CPU memory usage, inference time).  
+- ResNet-18, ResNet-34, and ResNet-50
+- DenseNet-121 and DenseNet-169
+- EfficientNet-B1 through EfficientNet-B5
+- VGG-16 for cataract severity
+
+The final CNN notebooks retain architecture-specific configurations, including input resolution, trainable layers, learning rates, class sampling, and loss settings.
+
+### Vision transformers
+
+- ViT-B/16 and ViT-B/32
+- DeiT-Tiny, DeiT-Small, and DeiT-Base
+- DeiT-Small-Distilled
+- Swin-Tiny, Swin-Small, and Swin-Base
+
+Two task-specific notebooks benchmark these architectures. Their documented starting configurations are separate from the CNN Optuna studies.
+
+### Hyperparameter optimization
+
+The Optuna implementation searches CNN backbone and classifier learning rates, weight decay, and label smoothing using validation macro-F1.
+
+Its selected parameters are saved with each experiment. They are not automatically transferred into the final notebooks or K-fold configuration file.
 
 ---
 
-## Inference Pipeline
-To enable video-level classification during surgery:
+## Experiment Workflows
 
-1. **Phase Detection**: A pre-existing module (developed by collaborators) detects the onset of the **Capsulorhexis phase** in surgical videos.  
-2. **Frame Classification**: From this point, each subsequent frame over a **10-second interval** is classified using the trained model.  
-3. **Majority Voting**: The most frequent predicted class across the window is assigned as the difficulty level of the case.  
+| Workflow | Purpose | Implementation |
+| --- | --- | --- |
+| [Final CNN notebooks](Codes/notebooks/cnn/) | Train and evaluate individual CNNs using retained final configurations | One notebook per architecture and task |
+| [Transformer benchmarks](Codes/notebooks/transformer/) | Compare transformer architectures on a single grouped train/validation/test split | One multi-model notebook per task |
+| [Optuna](Codes/Optuna/ReadMe.md) | Search CNN hyperparameters, then train and evaluate a fresh model | Python modules and a historical Kaggle launcher |
+| [CNN K-fold](Codes/K%20Fold/cnn%20models/ReadMe.md) | Evaluate retained CNN configurations across grouped folds | Modular Python implementation |
+| [Transformer K-fold](Codes/K%20Fold/transformer%20models/) | Evaluate a configurable transformer subset across grouped folds | One standalone notebook per task |
 
-This design ensures robustness against frame-level noise and provides a clinically meaningful prediction per surgical video.  
+Configuration details differ between workflows. Each folder README explains its required inputs, training settings, checkpoint selection, outputs, and restart behavior.
+
+---
+
+## Evaluation
+
+The single-split experiments use video-grouped training, validation, and test partitions. The K-fold implementations use `StratifiedGroupKFold`, with five folds by default.
+
+Reported metrics include:
+
+- Accuracy
+- Macro-F1 and weighted-F1
+- Per-class precision, recall, F1, and support
+- Confusion matrices
+- ROC-AUC where implemented
+
+K-fold outputs distinguish completed-fold mean and standard deviation from metrics computed using pooled out-of-fold predictions.
+
+The K-fold implementations select checkpoints using the held-out validation fold and report performance on that same fold. These are validation cross-validation results, rather than an additional independent test evaluation.
+
+Grouping is implemented using video identifiers. Establishing patient-level independence across different videos requires a verified video-to-patient mapping.
+
+---
+
+## Running the Experiments
+
+1. Select the workflow from the table above.
+2. Read its folder README and configure the required metadata and image paths.
+3. Install the dependencies specified for that workflow.
+4. Run the available metadata and split checks.
+5. Train the selected models and preserve their outputs.
+
+The original CNN notebooks target Google Colab. Transformer notebooks target Kaggle, with GPU scheduling described in their documentation. The CNN K-fold and Optuna Python runners execute sequential jobs on one selected device per process.
+
+The root `requirements.txt` is a general dependency list. Workflow-specific dependencies and environment assumptions are documented within each implementation.
 
 ---
 
 ## Results
-*(To be updated once benchmark results are finalized.)*  
-The best-performing model was selected based on accuracy, F1-score, and computational efficiency during inference.  
+
+The original CNN notebooks retain outputs from their individual experiments. Training and evaluation workflows also generate metrics, predictions, checkpoints, and diagnostic artifacts according to their implementation.
+
+The [results folder](results/README.md) currently contains the prediction example displayed above. Complete benchmark tables will be added with their dataset version, evaluation protocol, and completed-run coverage.
+
+The current experiments evaluate frame-level classification of the two target attributes. The example image illustrates a model prediction; it does not establish video-level or clinical performance.
 
 ---
 
 ## Repository Structure
+
+| Location | Contents |
+| --- | --- |
+| [Codes/](Codes/ReadMe.md) | Guide to the experiment implementations |
+| [Codes/notebooks/](Codes/notebooks/) | Final CNN notebooks and single-split transformer benchmarks |
+| [Codes/Optuna/](Codes/Optuna/ReadMe.md) | CNN hyperparameter search and final-training pipeline |
+| [Codes/K Fold/](Codes/K%20Fold/ReadMe.md) | CNN Python and transformer notebook cross-validation implementations |
+| [results/](results/README.md) | Prediction example and result documentation |
+| [reports/](reports/README.md) | Historical Persian internship report |
+
+---
+
+## Author
+
+**Yazdan Bayat**  
+Electrical Engineering — AI and Robotics  
+K. N. Toosi University of Technology  
+ARAS Laboratory
+
+[GitHub](https://github.com/YzdnByat) · [Hugging Face](https://huggingface.co/yzdnbyat)
+
+## Licensing
+
+A repository software license has not yet been specified. Dataset, source-video, pretrained-model, and third-party software terms apply separately.
