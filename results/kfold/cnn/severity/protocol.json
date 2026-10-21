@@ -1,0 +1,1466 @@
+{
+  "task": "severity",
+  "n_splits": 5,
+  "seed": 42,
+  "splitter": "StratifiedGroupKFold",
+  "group_column": "video_id",
+  "frame_records": 2541,
+  "video_id_groups": 645,
+  "label_index_to_class": {
+    "0": "low",
+    "1": "dense",
+    "2": "mature",
+    "3": "brunescent"
+  },
+  "class_counts": {
+    "low": 795,
+    "dense": 1047,
+    "mature": 614,
+    "brunescent": 85
+  },
+  "score_unit": "fraction in [0, 1]",
+  "standard_deviation": "sample SD over five folds (ddof=1)",
+  "reporting_unit": "frame",
+  "checkpoint_selection": "minimum validation loss",
+  "evaluation": "The held-out fold is used for checkpoint selection and final reporting; validation cross-validation, without an independent test set.",
+  "grouping_note": "Splits separate video_id groups; separate patient identities have not been established by these files.",
+  "confusion_matrix_axes": {
+    "rows": "true labels",
+    "columns": "predicted labels"
+  },
+  "fold_numbering": "0 to 4; epoch numbers are the archived values",
+  "source_package": "CNN-KFold-Results(1).zip",
+  "preparation": "Simplified from supplied result archives. CSV schemas aligned; scores retained. CNN binary per-fold sensitivity, precision, and specificity derived from saved confusion counts. No retraining.",
+  "recorded_model_configurations": {
+    "resnet50": {
+      "winning_config": {
+        "task": "severity",
+        "model": "resnet50",
+        "source_notebook": "Final_ResNet_50.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "layer2",
+            "layer3",
+            "layer4",
+            "fc"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "layer2",
+                "layer3",
+                "layer4"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "fc"
+              ],
+              "learning_rate": 0.0002,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 5,
+          "best_validation_loss_rounded": 0.5119
+        },
+        "extraction_issues": [
+          "Notebook batch 64 differs from Optuna batch 32.",
+          "Effective notebook unfreeze scope differs from the current Optuna model factory.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b1": {
+      "winning_config": {
+        "task": "severity",
+        "model": "efficientnet_b1",
+        "source_notebook": "Final_EFF_B1.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 240,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.5",
+            "features.6",
+            "features.7",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features.5",
+                "features.6",
+                "features.7"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.001,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": null
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 240,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 5,
+            "sigma": [
+              0.1,
+              1.2
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 8,
+          "best_validation_loss_rounded": 0.5442
+        },
+        "extraction_issues": [
+          "Notebook batch 64 differs from Optuna batch 48.",
+          "Effective notebook unfreeze scope differs from the current Optuna model factory.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b5": {
+      "winning_config": {
+        "task": "severity",
+        "model": "efficientnet_b5",
+        "source_notebook": "Final_EFF_B5.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 456,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.6",
+            "features.7",
+            "features.8",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features.6",
+                "features.7",
+                "features.8"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.001,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": null
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 456,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 5,
+            "sigma": [
+              0.1,
+              1.2
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 28,
+          "best_validation_loss_rounded": 0.5606
+        },
+        "extraction_issues": [
+          "Notebook batch 64 differs from Optuna batch 8.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "resnet34": {
+      "winning_config": {
+        "task": "severity",
+        "model": "resnet34",
+        "source_notebook": "Final_ResNet_34.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "layer3",
+            "layer4",
+            "fc"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "layer3",
+                "layer4"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "fc"
+              ],
+              "learning_rate": 0.0003,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 9,
+          "best_validation_loss_rounded": 0.5409
+        },
+        "extraction_issues": [
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b2": {
+      "winning_config": {
+        "task": "severity",
+        "model": "efficientnet_b2",
+        "source_notebook": "Final_EFF_B2.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 260,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.6",
+            "features.7",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features.6",
+                "features.7"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.001,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": null
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 260,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 5,
+            "sigma": [
+              0.1,
+              1.2
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 21,
+          "best_validation_loss_rounded": 0.5918
+        },
+        "extraction_issues": [
+          "Notebook input 260 differs from Optuna input 288.",
+          "Notebook batch 64 differs from Optuna batch 32.",
+          "Effective notebook unfreeze scope differs from the current Optuna model factory.",
+          "Notebook typo changes the effective unfreeze scope from the documented intent.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "resnet18": {
+      "winning_config": {
+        "task": "severity",
+        "model": "resnet18",
+        "source_notebook": "Final_ResNet_18.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "layer3",
+            "layer4",
+            "fc"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "layer3",
+                "layer4"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "fc"
+              ],
+              "learning_rate": 0.0003,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 4,
+          "best_validation_loss_rounded": 0.5288
+        },
+        "extraction_issues": [
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b3": {
+      "winning_config": {
+        "task": "severity",
+        "model": "efficientnet_b3",
+        "source_notebook": "Final_Eff_B3.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 260,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.6",
+            "features.7",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features.6",
+                "features.7"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.001,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": null
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 260,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 5,
+            "sigma": [
+              0.1,
+              1.2
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 28,
+          "best_validation_loss_rounded": 0.606
+        },
+        "extraction_issues": [
+          "Notebook input 260 differs from Optuna input 300.",
+          "Notebook batch 64 differs from Optuna batch 24.",
+          "Effective notebook unfreeze scope differs from the current Optuna model factory.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "vgg16": {
+      "winning_config": {
+        "task": "severity",
+        "model": "vgg16",
+        "source_notebook": "Final_VGG_16.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features[24:]",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features[24:]"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.0001,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 2,
+          "best_validation_loss_rounded": 0.7057
+        },
+        "extraction_issues": [
+          "Model is not supported by the current Optuna model list or model factory.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b4": {
+      "winning_config": {
+        "task": "severity",
+        "model": "efficientnet_b4",
+        "source_notebook": "Final_EFF_B4.ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 380,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.7",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features.7"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.001,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": null
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 380,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              1.2
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 26,
+          "best_validation_loss_rounded": 0.6467
+        },
+        "extraction_issues": [
+          "Notebook batch 64 differs from Optuna batch 12.",
+          "Effective notebook unfreeze scope differs from the current Optuna model factory.",
+          "Notebook typo changes the effective unfreeze scope from the documented intent.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "densenet169": {
+      "winning_config": {
+        "task": "severity",
+        "model": "densenet169",
+        "source_notebook": "Final_DenseNet_169 (1).ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.denseblock4",
+            "features.norm5",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features.denseblock4",
+                "features.norm5"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.0003,
+              "weight_decay": 1e-05
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 4,
+          "best_validation_loss_rounded": 0.6801
+        },
+        "extraction_issues": [
+          "Notebook batch 64 differs from Optuna batch 24.",
+          "Notebook uses separate backbone/head weight decay; current Optuna interface accepts only one value.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "densenet121": {
+      "winning_config": {
+        "task": "severity",
+        "model": "densenet121",
+        "source_notebook": "Final_DenseNet_121 (1).ipynb",
+        "num_classes": 4,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": [
+            1,
+            1,
+            1,
+            2
+          ]
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.denseblock4",
+            "features.norm5",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "backbone",
+              "scopes": [
+                "features.denseblock4",
+                "features.norm5"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 5e-05
+            },
+            {
+              "name": "head",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.0003,
+              "weight_decay": 1e-05
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1200,
+            "1": 1200,
+            "2": 1200,
+            "3": 400
+          }
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12.0,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch": 6,
+          "best_validation_loss_rounded": 0.7041
+        },
+        "extraction_issues": [
+          "Notebook batch 64 differs from Optuna batch 32.",
+          "Notebook uses separate backbone/head weight decay; current Optuna interface accepts only one value.",
+          "Notebook severity augmentation differs from the current Optuna severity transform profile.",
+          "Notebook sampler quotas differ from the current Optuna severity quotas.",
+          "Notebook uses 30 epochs without early stopping and selects by validation loss; current training uses up to 50 epochs, early stopping, and Macro-F1 checkpoint selection.",
+          "Notebook checkpoint filename is incorrectly hard-coded as efficientnet_b3_best.pth."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    }
+  }
+}

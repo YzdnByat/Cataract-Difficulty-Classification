@@ -1,0 +1,1350 @@
+{
+  "task": "poor_dilation",
+  "n_splits": 5,
+  "seed": 42,
+  "splitter": "StratifiedGroupKFold",
+  "group_column": "video_id",
+  "frame_records": 3081,
+  "video_id_groups": 700,
+  "label_index_to_class": {
+    "0": "normal",
+    "1": "poor_dilation"
+  },
+  "class_counts": {
+    "normal": 2541,
+    "poor_dilation": 540
+  },
+  "score_unit": "fraction in [0, 1]",
+  "standard_deviation": "sample SD over five folds (ddof=1)",
+  "reporting_unit": "frame",
+  "checkpoint_selection": "minimum validation loss",
+  "evaluation": "The held-out fold is used for checkpoint selection and final reporting; validation cross-validation, without an independent test set.",
+  "grouping_note": "Splits separate video_id groups; separate patient identities have not been established by these files.",
+  "confusion_matrix_axes": {
+    "rows": "true labels",
+    "columns": "predicted labels"
+  },
+  "fold_numbering": "0 to 4; epoch numbers are the archived values",
+  "source_package": "CNN-KFold-Results(1).zip",
+  "preparation": "Simplified from supplied result archives. CSV schemas aligned; scores retained. CNN binary per-fold sensitivity, precision, and specificity derived from saved confusion counts. No retraining.",
+  "recorded_model_configurations": {
+    "resnet50": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "resnet50",
+        "source_notebook": "Final_2_ResNet_50.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "layer2",
+            "layer3",
+            "layer4",
+            "fc"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "layer2",
+              "scopes": [
+                "layer2"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "layer3",
+              "scopes": [
+                "layer3"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "layer4",
+              "scopes": [
+                "layer4"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "fc",
+              "scopes": [
+                "fc"
+              ],
+              "learning_rate": 0.0002,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 30,
+          "best_validation_loss_rounded": 0.2588,
+          "validation_accuracy_at_best_loss_rounded": 0.9384
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "resnet34": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "resnet34",
+        "source_notebook": "Final_2_ResNet_34.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "layer3",
+            "layer4",
+            "fc"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "layer3",
+              "scopes": [
+                "layer3"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "layer4",
+              "scopes": [
+                "layer4"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "fc",
+              "scopes": [
+                "fc"
+              ],
+              "learning_rate": 0.0003,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 11,
+          "best_validation_loss_rounded": 0.2856,
+          "validation_accuracy_at_best_loss_rounded": 0.9179
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b2": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "efficientnet_b2",
+        "source_notebook": "Final_2_EfficientNet_B2.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.5",
+            "features.6",
+            "features.7",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "features_5",
+              "scopes": [
+                "features.5"
+              ],
+              "learning_rate": 5e-06,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_6",
+              "scopes": [
+                "features.6"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_7",
+              "scopes": [
+                "features.7"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "classifier",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.00015,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 26,
+          "best_validation_loss_rounded": 0.2638,
+          "validation_accuracy_at_best_loss_rounded": 0.9343
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "resnet18": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "resnet18",
+        "source_notebook": "Final_2_ResNet_18.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "layer3",
+            "layer4",
+            "fc"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "layer3",
+              "scopes": [
+                "layer3"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "layer4",
+              "scopes": [
+                "layer4"
+              ],
+              "learning_rate": 3e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "fc",
+              "scopes": [
+                "fc"
+              ],
+              "learning_rate": 0.0003,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 16,
+          "best_validation_loss_rounded": 0.3157,
+          "validation_accuracy_at_best_loss_rounded": 0.8994
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "densenet121": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "densenet121",
+        "source_notebook": "Final_2_DenseNet_121.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.denseblock4",
+            "features.norm5",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "classifier",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.0002,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_denseblock4",
+              "scopes": [
+                "features.denseblock4"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_norm5",
+              "scopes": [
+                "features.norm5"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 17,
+          "best_validation_loss_rounded": 0.2957,
+          "validation_accuracy_at_best_loss_rounded": 0.922
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b1": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "efficientnet_b1",
+        "source_notebook": "Final_2_EfficientNet_B1.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.5",
+            "features.6",
+            "features.7",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "classifier",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.0002,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_7",
+              "scopes": [
+                "features.7"
+              ],
+              "learning_rate": 2e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_6",
+              "scopes": [
+                "features.6"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_5",
+              "scopes": [
+                "features.5"
+              ],
+              "learning_rate": 5e-06,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 30,
+          "best_validation_loss_rounded": 0.2925,
+          "validation_accuracy_at_best_loss_rounded": 0.9076
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "densenet169": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "densenet169",
+        "source_notebook": "Final_2_DenseNet_169.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.denseblock4",
+            "features.norm5",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "classifier",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.00015,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_denseblock4",
+              "scopes": [
+                "features.denseblock4"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_norm5",
+              "scopes": [
+                "features.norm5"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 25,
+          "best_validation_loss_rounded": 0.2673,
+          "validation_accuracy_at_best_loss_rounded": 0.9261
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b3": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "efficientnet_b3",
+        "source_notebook": "Final_2_EfficientNet_B3.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.6",
+            "features.7",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "features_6",
+              "scopes": [
+                "features.6"
+              ],
+              "learning_rate": 5e-06,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_7",
+              "scopes": [
+                "features.7"
+              ],
+              "learning_rate": 1e-05,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "classifier",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 0.0001,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 25,
+          "best_validation_loss_rounded": 0.3426,
+          "validation_accuracy_at_best_loss_rounded": 0.8809
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b4": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "efficientnet_b4",
+        "source_notebook": "Final_2_EfficientNet_B4.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.7",
+            "features.8",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "features_7",
+              "scopes": [
+                "features.7"
+              ],
+              "learning_rate": 5e-06,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "features_8",
+              "scopes": [
+                "features.8"
+              ],
+              "learning_rate": 5e-06,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "classifier",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 8e-05,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 28,
+          "best_validation_loss_rounded": 0.4577,
+          "validation_accuracy_at_best_loss_rounded": 0.8419
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    },
+    "efficientnet_b5": {
+      "winning_config": {
+        "task": "poor_dilation",
+        "model": "efficientnet_b5",
+        "source_notebook": "Final_2_EfficientNet_B5.ipynb",
+        "num_classes": 2,
+        "pretrained": true,
+        "input_resolution": 224,
+        "batch_size": 64,
+        "max_epochs": 30,
+        "checkpoint_monitor": "validation_loss",
+        "loss": {
+          "name": "CrossEntropyLoss",
+          "label_smoothing": 0.05,
+          "class_weights": null
+        },
+        "fine_tuning": {
+          "freeze_all_first": true,
+          "unfreeze_scopes": [
+            "features.8",
+            "classifier"
+          ]
+        },
+        "optimizer": {
+          "name": "AdamW",
+          "parameter_groups": [
+            {
+              "name": "features_8",
+              "scopes": [
+                "features.8"
+              ],
+              "learning_rate": 3e-06,
+              "weight_decay": 0.0001
+            },
+            {
+              "name": "classifier",
+              "scopes": [
+                "classifier"
+              ],
+              "learning_rate": 5e-05,
+              "weight_decay": 0.0001
+            }
+          ]
+        },
+        "scheduler": {
+          "name": "ReduceLROnPlateau",
+          "monitor": "validation_loss",
+          "mode": "min",
+          "factor": 0.5,
+          "patience": 3,
+          "min_learning_rate": 1e-06
+        },
+        "sampler": {
+          "name": "BalancedClassSampler",
+          "replacement": true,
+          "target_per_class": {
+            "0": 1000,
+            "1": 1000
+          },
+          "samples_per_epoch": 2000,
+          "all_sampled_training_images_receive_stochastic_augmentation": true
+        },
+        "augmentation": {
+          "pad_to_square": "image_mean_rgb",
+          "resize": 224,
+          "rotation_degrees": 12,
+          "horizontal_flip_probability": 0.3,
+          "vertical_flip_probability": 0.0,
+          "affine_translate": [
+            0.1,
+            0.1
+          ],
+          "affine_scale": [
+            0.95,
+            1.05
+          ],
+          "affine_shear": [
+            -4,
+            4
+          ],
+          "color_jitter": {
+            "brightness": 0.25,
+            "contrast": 0.25,
+            "saturation": 0.1,
+            "probability": 0.6
+          },
+          "gaussian_blur": {
+            "kernel_size": 3,
+            "sigma": [
+              0.1,
+              0.4
+            ],
+            "probability": 0.3
+          },
+          "normalize_mean": [
+            0.485,
+            0.456,
+            0.406
+          ],
+          "normalize_std": [
+            0.229,
+            0.224,
+            0.225
+          ]
+        },
+        "reference_run": {
+          "best_epoch_by_printed_validation_loss": 30,
+          "best_validation_loss_rounded": 0.5104,
+          "validation_accuracy_at_best_loss_rounded": 0.8357
+        },
+        "extraction_issues": [
+          "Checkpoint filename is resnet18_poor_dilation_best.pth regardless of architecture; use a model-specific path in shared code.",
+          "BalancedClassSampler uses NumPy randomness without an explicit notebook seed; seed it per fold for reproducibility."
+        ]
+      },
+      "execution": {
+        "n_splits": 5,
+        "seed": 42,
+        "batch_size_override": null
+      }
+    }
+  }
+}
