@@ -1,8 +1,0 @@
-{
-  "task": "poor_dilation",
-  "n_splits": 5,
-  "seed": 42,
-  "splitter": "StratifiedGroupKFold",
-  "group_column": "video_id",
-  "fold_assignment_sha256": "a2ce6b30b3a4f9e7e2e214b80eb02754f982eae278bb435a0bdb8d0a55903087"
-}
