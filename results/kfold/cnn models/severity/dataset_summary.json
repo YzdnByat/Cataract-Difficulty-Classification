@@ -1,0 +1,16 @@
+{
+  "task": "severity",
+  "unique_frame_records": 2541,
+  "unique_video_id_groups": 645,
+  "class_counts": {
+    "low": 795,
+    "dense": 1047,
+    "mature": 614,
+    "brunescent": 85
+  },
+  "n_splits": 5,
+  "seed": 42,
+  "group_column": "video_id",
+  "fold_assignment_sha256": "d4cfc8eb84e074e140ca5977fdd7acbb2b800aab883d4474c03c171b69ef2c50",
+  "patient_identity_verified": false
+}

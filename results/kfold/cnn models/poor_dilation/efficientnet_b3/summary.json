@@ -1,0 +1,23 @@
+{
+  "completed_folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "expected_folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "complete": true,
+  "pooled_oof_metrics": {
+    "accuracy": 0.8919182083739046,
+    "macro_f1": 0.8218777392877734,
+    "weighted_f1": 0.8944196536984093,
+    "roc_auc": 0.9254449254449254
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "fold": 3,
+  "model": "efficientnet_b4",
+  "task": "poor_dilation",
+  "train_frames": 2453,
+  "train_videos": 559,
+  "val_frames": 628,
+  "val_videos": 141,
+  "epochs_trained": 30,
+  "parameter_counts": {
+    "total": 17552202,
+    "trainable": 5279990,
+    "frozen": 12272212
+  },
+  "best_epoch": 29,
+  "best_validation_loss": 0.42172828031952975,
+  "selected_checkpoint_validation_loss": 0.42172828031952975,
+  "metrics": {
+    "accuracy": 0.8614649681528662,
+    "macro_f1": 0.7692492872980679,
+    "weighted_f1": 0.8584453110971676,
+    "roc_auc": 0.8761744314132055
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "task": "severity",
+  "n_splits": 5,
+  "seed": 42,
+  "splitter": "StratifiedGroupKFold",
+  "group_column": "video_id",
+  "fold_assignment_sha256": "d4cfc8eb84e074e140ca5977fdd7acbb2b800aab883d4474c03c171b69ef2c50"
+}

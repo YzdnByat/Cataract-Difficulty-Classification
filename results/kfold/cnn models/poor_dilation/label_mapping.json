@@ -1,0 +1,9 @@
+{
+  "task": "poor_dilation",
+  "index_to_class": {
+    "0": "normal",
+    "1": "poor_dilation"
+  },
+  "positive_class": 1,
+  "normalization": "confusion matrices are normalized within true-label rows"
+}

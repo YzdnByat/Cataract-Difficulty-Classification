@@ -1,0 +1,24 @@
+{
+  "fold": 2,
+  "model": "resnet18",
+  "task": "poor_dilation",
+  "train_frames": 2418,
+  "train_videos": 557,
+  "val_frames": 663,
+  "val_videos": 143,
+  "epochs_trained": 30,
+  "parameter_counts": {
+    "total": 11177538,
+    "trainable": 10494466,
+    "frozen": 683072
+  },
+  "best_epoch": 28,
+  "best_validation_loss": 0.3919011580548495,
+  "selected_checkpoint_validation_loss": 0.3919011580548495,
+  "metrics": {
+    "accuracy": 0.8823529411764706,
+    "macro_f1": 0.8311897735878621,
+    "weighted_f1": 0.878708441567419,
+    "roc_auc": 0.8907370444296592
+  }
+}
