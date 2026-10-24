@@ -1,15 +1,16 @@
 # Results
 
-Five-fold validation results for cataract severity classification and poor pupil dilation detection from surgical microscope frames.
+I report K-fold evaluations and CNN hyperparameter optimization for cataract severity classification and poor pupil dilation detection.
 
-| Model family | Cataract severity | Poor pupil dilation |
+| Experiment | Cataract severity | Poor pupil dilation |
 | --- | --- | --- |
-| CNNs | [11 models](kfold/cnn/severity/) | [10 models](kfold/cnn/poor_dilation/) |
-| Transformers | [4 models](kfold/transformers/severity/) | [4 models](kfold/transformers/poor_dilation/) |
+| CNN K-fold | [11 models](kfold/cnn/severity/) | [10 models](kfold/cnn/poor_dilation/) |
+| Transformer K-fold | [4 models](kfold/transformers/severity/) | [4 models](kfold/transformers/poor_dilation/) |
+| Optuna optimization | [10 CNNs](optuna/severity/) | [10 CNNs](optuna/poor_dilation/) |
 
-## Highest mean macro-F1 in each group
+## K-fold summary
 
-Values are mean ± sample standard deviation over five folds, in percent. Ranking is descriptive and does not establish statistical significance.
+These models achieved the highest mean macro-F1 per task and family. Scores are **five-fold mean ± sample standard deviation (%)**.
 
 | Task | Family | Model | Accuracy (%) | Macro-F1 (%) |
 | --- | --- | --- | ---: | ---: |
@@ -18,10 +19,14 @@ Values are mean ± sample standard deviation over five folds, in percent. Rankin
 | Cataract severity | Transformer | [Swin-Small](kfold/transformers/severity/Swin-Small/) | 88.59 ± 1.85 | 89.54 ± 2.61 |
 | Poor pupil dilation | Transformer | [ViT-B/16](kfold/transformers/poor_dilation/ViT-B_16/) | 96.68 ± 1.29 | 94.33 ± 1.00 |
 
-## Evaluation
+I used identical stratified, video-grouped folds for both families (seed **42**): **2,541 severity frames/645 groups** and **3,081 dilation frames/700 groups**. Training configurations differ.
 
-The recorded runs use five stratified folds grouped by video ID and seed **42**. Severity uses **2,541 frames in 645 video-ID groups**; poor dilation uses **3,081 frames in 700 groups**. These are the records represented in the saved experiment outputs.
+I selected checkpoints by held-out validation loss and scored the same folds. These are frame-level validation cross-validation results; rankings are descriptive. Separate patient identities across video IDs are unverified.
 
-CNN and transformer fold assignments match for each task. Their training configurations differ. The held-out fold supplies both checkpoint selection by validation loss and final scores, so these are validation cross-validation results. Scores are calculated per frame; grouping by video ID does not itself establish separate patient identities across videos.
+## Optuna results
 
-Task pages provide comparison tables and class definitions. Every model folder contains the same five file types: fold scores, pooled per-class scores, a pooled confusion matrix, its numeric counts, and combined training curves. CSV scores use fractions; rendered tables use percent. Pooled out-of-fold (OOF) metrics combine all held-out predictions once and can differ from fold means.
+I ran **12 trial attempts per CNN and task (240 total)**, selected hyperparameters by validation macro-F1, and trained final models using fixed training/validation/test partitions.
+
+The [Optuna section](optuna/README.md) contains comparisons, selected hyperparameters, and charts. I distinguish search validation, final training validation, and test scores, keeping them separate from K-fold results.
+
+CSV scores use fractions in [0, 1]; README tables use percentages.
