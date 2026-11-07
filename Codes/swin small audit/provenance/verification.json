@@ -1,0 +1,134 @@
+{
+  "preserved_definitions": 14,
+  "both_notebooks_have_identical_function_and_class_bodies": true,
+  "severity_real_archive_and_metadata_preparation": {
+    "passed": true,
+    "train_frames": 1795,
+    "val_frames": 385,
+    "test_frames": 361,
+    "split_hash": "9708f78bfb800eb51bac3b3f66f225d06a721240a9e477193ba24a4530b376f1",
+    "matches_historical_manifest": true,
+    "downloads_executed": false,
+    "local_test_note": "Release --prepare-only executed with original local XLSX/ZIP and no dependency stubs. New dimensions/audit/previews saved for all 2541 frames."
+  },
+  "poor_dilation_historical_manifest_resplitting": {
+    "passed": true,
+    "split_hash": "c01301313237e989cb2234d5a23043b6de833a0a0f3d847f7f173ddbb46bcb22",
+    "train_frames": 2116,
+    "val_frames": 495,
+    "test_frames": 470,
+    "full_image_preparation_executed": false,
+    "matches_historical_manifest": true
+  },
+  "artifact_export_tests": "Synthetic binary and four-class cases; no trained results are shipped in this code package.",
+  "gallery_javascript_syntax_checked": true,
+  "python_syntax_checked": true,
+  "gpu_training_executed": false,
+  "pretrained_weight_loading_executed": false,
+  "numeric_torch_observer_equivalence_test": "Passed on CPU: weights, predictions, losses and RNG preserved.",
+  "checkpoint_update": "Best-only validation macro-F1; original loss-based early stopping; full state stored only at the selected best epoch.",
+  "unit_tests": {
+    "run": 25,
+    "passed": 25,
+    "skipped": 0,
+    "failures": 0
+  },
+  "verification_environment": {
+    "python": "3.12.14",
+    "torch": "2.7.1+cpu",
+    "torchvision": "0.22.1+cpu",
+    "timm": "1.0.22",
+    "numpy": "2.3.5",
+    "Pillow": "12.3.0",
+    "note": "Temporary matched CPU-only PyTorch/torchvision pair used for verification; not bundled or substituted for the training GPU environment."
+  },
+  "padding_tests": {
+    "passed": true,
+    "exact_resized_content_retained": true,
+    "square_landscape_portrait_odd_extreme_cases": true,
+    "edge_boundary_continuity_and_mean_convergence": true,
+    "export_matches_actual_loader_callable_pixel_for_pixel": true,
+    "stale_png_regeneration_and_source_checksum_guard": true,
+    "preprocessing_protocol_mismatch_rejected": true,
+    "real_severity_training_class_previews_visually_reviewed": 4
+  },
+  "torch_transform_tests": {
+    "passed": true,
+    "normalized_dataset_tensor_matches_padded_rgb_formula_exactly": true,
+    "original_augmentation_rng_draws_preserved": true,
+    "mean_fill_preserves_constant_colour": true,
+    "original_inverse_class_weights_replacement_and_draw_count": true
+  },
+  "swin_cpu_forward_test": {
+    "passed": true,
+    "pretrained": false,
+    "pretrained_weights_downloaded": false,
+    "input_shape": [
+      1,
+      3,
+      224,
+      224
+    ],
+    "severity_output_shape": [
+      1,
+      4
+    ],
+    "poor_dilation_output_shape": [
+      1
+    ],
+    "original_default_pretrained_tag_equals_pinned_tag": true,
+    "checkpoint_preprocessing_contract_matches": true
+  },
+  "preprocessing": {
+    "algorithm_version": "aspect_fit_edge_mean_blend_v1",
+    "implementation_sha256": "247e2d334ff7f1b21814a4ed83b74e39d933f39cfddbe556f704292cf250059c",
+    "configuration": {
+      "input_size": 224,
+      "interpolation": "bicubic",
+      "normalization": "imagenet",
+      "padding": {
+        "method": "edge_blend",
+        "transition_fraction": 0.1,
+        "blur_radius": 2.0
+      }
+    },
+    "runtime_versions": {
+      "Pillow": "12.3.0",
+      "numpy": "2.3.5"
+    },
+    "fingerprint": "323b554d3e82259585b93712bd1863c4bb0abfd76465afe73b2f0ab3c4659dd8",
+    "pretrained_checkpoint": "swin_small_patch4_window7_224.ms_in22k_ft_in1k",
+    "tensor_normalization": {
+      "mean": [
+        0.485,
+        0.456,
+        0.406
+      ],
+      "std": [
+        0.229,
+        0.224,
+        0.225
+      ],
+      "formula": "(RGB / 255 - mean) / std"
+    },
+    "training_augmentation": {
+      "horizontal_flip_probability": 0.5,
+      "vertical_flip_probability": 0.3,
+      "rotation_degrees": [
+        -15,
+        15
+      ],
+      "translation_fraction": [
+        0.1,
+        0.1
+      ],
+      "geometric_interpolation": "nearest (original augmentation default)",
+      "newly_exposed_pixel_fill": "current image mean RGB; no black fill"
+    },
+    "evaluation_augmentation": false,
+    "geometry": "Full frame resized proportionally, centered on square; no center crop.",
+    "limits": "Resizing loses fine detail. Existing training rotation/translation can move content outside the canvas."
+  },
+  "performance_benchmark_executed": false,
+  "clinical_accuracy_improvement_measured": false
+}

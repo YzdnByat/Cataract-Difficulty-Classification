@@ -1,0 +1,149 @@
+{
+  "files": [
+    {
+      "relative_path": "README.md",
+      "bytes": 20286,
+      "sha256": "6c92a29b6ecae0e6770fefe2edfcba383a53da9515a1c39c6fb846bd15bd437b"
+    },
+    {
+      "relative_path": "archive_results.py",
+      "bytes": 1386,
+      "sha256": "e53fc3d4071128f49e46368e46fa2f2eb45acc0f16d7da976f986254e8e4f28c"
+    },
+    {
+      "relative_path": "cataract_swin/__init__.py",
+      "bytes": 95,
+      "sha256": "29b8471c958e9da21c427f10a968506c19fbbcc86a0f0ff86fec0e97e7883bf3"
+    },
+    {
+      "relative_path": "cataract_swin/cli.py",
+      "bytes": 9177,
+      "sha256": "5b421e2cb37ddff7da7888aeee9f11303dbd8f55b5e5db0b7a7244412d343779"
+    },
+    {
+      "relative_path": "cataract_swin/config.py",
+      "bytes": 3881,
+      "sha256": "ecbd8d6d6b4dd3c4b2bb9ec346829f1fd5fc828a0e3386b0561d9477238e1808"
+    },
+    {
+      "relative_path": "cataract_swin/data_io.py",
+      "bytes": 7681,
+      "sha256": "ce2062872e7126c722f90b8de36ad466389df2b8eb9ccad9a5fa863998dac7c0"
+    },
+    {
+      "relative_path": "cataract_swin/engine.py",
+      "bytes": 10276,
+      "sha256": "90456446f8be4cff36163ba38b9c20eeed8aa97824fd1dddf06b3e542c00d8cb"
+    },
+    {
+      "relative_path": "cataract_swin/io_utils.py",
+      "bytes": 790,
+      "sha256": "cf6a20563504def93daf2afc5cf1b3d78cb686cdeee1d566094caa3088a19a69"
+    },
+    {
+      "relative_path": "cataract_swin/model.py",
+      "bytes": 2463,
+      "sha256": "38ba7355bd9afb78e1bba62284560a5826f41a2a6fc8a5aea3f3ce19f6c49317"
+    },
+    {
+      "relative_path": "cataract_swin/preprocessing.py",
+      "bytes": 7276,
+      "sha256": "247e2d334ff7f1b21814a4ed83b74e39d933f39cfddbe556f704292cf250059c"
+    },
+    {
+      "relative_path": "cataract_swin/preprocessing_audit.py",
+      "bytes": 3010,
+      "sha256": "6f47dfcfe6bb96ec0b11753be4e434b648b4f30c1b4e5dfaf0a617022da28c24"
+    },
+    {
+      "relative_path": "cataract_swin/reporting.py",
+      "bytes": 20189,
+      "sha256": "1e38bcffd36ab1546498fe07519ccd16ab78d82cabd1d8987643f7a5618f1f38"
+    },
+    {
+      "relative_path": "cataract_swin/run_lock.py",
+      "bytes": 1142,
+      "sha256": "904f3ca291496aec074e746d7a7c3ba28156c109487cf70d0d1f6c30f7878406"
+    },
+    {
+      "relative_path": "cataract_swin/sources.json",
+      "bytes": 856,
+      "sha256": "1846152e1824c2997d910cf0689347b13a38bffd7c827e0be4c46ca6bbbc1281"
+    },
+    {
+      "relative_path": "cataract_swin/tracking.py",
+      "bytes": 4133,
+      "sha256": "02bd922632dc8a54a4d7b629b8e29efb1ea0ed333317ba4d7ba3b65d684e7c1c"
+    },
+    {
+      "relative_path": "cataract_swin/transforms.py",
+      "bytes": 2503,
+      "sha256": "d3d7c2cd0869621c37a4a49c6ff29b65f090c86b7404221c5845b9e0df1649e0"
+    },
+    {
+      "relative_path": "cataract_swin/worker.py",
+      "bytes": 2429,
+      "sha256": "e1ba72d645b9c93c149e57066db4062204b782d6f6b60e9296a2410ec4bc5262"
+    },
+    {
+      "relative_path": "configs/poor_dilation.yaml",
+      "bytes": 690,
+      "sha256": "49d8e8f1c0ccfd93f9dba085494c3f51f48d284b154b5eb298b21ea88df4c62c"
+    },
+    {
+      "relative_path": "configs/severity.yaml",
+      "bytes": 680,
+      "sha256": "e2193b692b4d24592846356dc0d4d40276c3468c7bf861d773f7b31b28f6755a"
+    },
+    {
+      "relative_path": "provenance/authorized_changes.json",
+      "bytes": 5085,
+      "sha256": "d72e935f551b69d2c77477f94a8e23cea0618bae228e19bb55cfecef10fb3094"
+    },
+    {
+      "relative_path": "provenance/input_archive_check.json",
+      "bytes": 1061,
+      "sha256": "2b4a17e6d8424c45eb39ef6bf9720214e145d4d63dae1b608d5ec978a1239253"
+    },
+    {
+      "relative_path": "provenance/notebook_equivalence.json",
+      "bytes": 3810,
+      "sha256": "6eea3b4dc9cf4b30500a8907a922f66cdcb626016081dcaf2176327a25ffd234"
+    },
+    {
+      "relative_path": "provenance/verification.json",
+      "bytes": 4672,
+      "sha256": "b9df85f6fa008b802682a15d461d1c85232c6c489888808a3bbc083da915b1a6"
+    },
+    {
+      "relative_path": "requirements.txt",
+      "bytes": 297,
+      "sha256": "bec773dc6d53b966cda7200f22c95af73dc0d6933ec71145466018e7bb9af2bb"
+    },
+    {
+      "relative_path": "tests/test_checkpoint_policy.py",
+      "bytes": 5832,
+      "sha256": "d60988215e3420d4fa5dc77578e376a5609a15a4e341b2692017cfcafd57fa23"
+    },
+    {
+      "relative_path": "tests/test_preprocessing.py",
+      "bytes": 13297,
+      "sha256": "76a29a972532ec78e33ed85f622e820a396f765fb5b666782228f6183920c74a"
+    },
+    {
+      "relative_path": "tests/test_project.py",
+      "bytes": 10553,
+      "sha256": "b01a2d6070412f4943dae068e49e366130b0c685661682b20cbdc0d6cea2e0cb"
+    },
+    {
+      "relative_path": "tests/test_torch_observation.py",
+      "bytes": 2657,
+      "sha256": "8d5a2046e3ae4e0cc5d69c4c5984615638572260e8cf9c67a1225ed29ea8416e"
+    },
+    {
+      "relative_path": "train.py",
+      "bytes": 174,
+      "sha256": "e2eae4947994cd16e4015eb6065a9b491ecacb6c62ddb7fef6e95a4514298c0e"
+    }
+  ]
+}
