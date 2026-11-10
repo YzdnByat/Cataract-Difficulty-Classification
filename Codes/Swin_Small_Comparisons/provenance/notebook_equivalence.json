@@ -1,0 +1,120 @@
+{
+  "format_version": 1,
+  "definitions": {
+    "require": {
+      "module": "io_utils.py",
+      "ast_sha256": "328e91364457de479d664312993b901dba4a1369245fd8e421129b512a82d6c1"
+    },
+    "file_hash": {
+      "module": "io_utils.py",
+      "ast_sha256": "198ebeeee66d997f607f45519c5cf8dcb956ec4689478932dc775d98e407a0ac"
+    },
+    "table_hash": {
+      "module": "io_utils.py",
+      "ast_sha256": "5af895aa1284c130cbef0d7c09d6c06c9fa8163ac66576c0a96dcaa656a9352b"
+    },
+    "save_json": {
+      "module": "io_utils.py",
+      "ast_sha256": "fb09f3c1aa645793102380e58f8b5ff3719bdf09eee36914ffee07f3f166490c"
+    },
+    "fetch": {
+      "module": "data_io.py",
+      "ast_sha256": "ac3d2cb3f092b37b07692a189e1bebe97e0db414557136743e80ace0d50bc7fa"
+    },
+    "canonical_metadata": {
+      "module": "data_io.py",
+      "ast_sha256": "3a19f85ad1fd65e845e1582b49a6087b6b5d2bfd314a1eef9eb0d5a3af44126c"
+    },
+    "extract_archive": {
+      "module": "data_io.py",
+      "ast_sha256": "2b411ba28b56729b8578239e01da02908fbc243e45205aad28f71d51513ae694"
+    },
+    "attach_images": {
+      "module": "data_io.py",
+      "ast_sha256": "6977453c6442d856c55538620926588f1337bf213b3bb6a9c3a26a6dd2f411f0"
+    },
+    "assign_splits": {
+      "module": "data_io.py",
+      "ast_sha256": "4e033523eb098ba9a0552c2859fbf01786119d2edd30946cb98a5aede3a2d4c7"
+    },
+    "prepare_task": {
+      "module": "data_io.py",
+      "ast_sha256": "ea5deb3ed4308c0f966dacbe80785be6f9501acabd5385372e788ea3c17a2411"
+    },
+    "FrameDataset": {
+      "module": "transforms.py",
+      "ast_sha256": "e8b9a63ed8af26c5a999c8d27497c0e8329b54a357312777a4945dcddaadd401"
+    },
+    "make_loaders": {
+      "module": "transforms.py",
+      "ast_sha256": "cdc3593bfe56045800cff2245dbb69a1fb39e9562a32b372b3a4440e9b368dde"
+    },
+    "TransformerClassifier": {
+      "module": "model.py",
+      "ast_sha256": "1c660d08d3c0de3df1e0f29c7bbbc7ccb700edc7d801874c3a297be09f07c890"
+    },
+    "seed_all": {
+      "module": "engine.py",
+      "ast_sha256": "0ec35f351d4b2fc93ca5a41dc77bbe6aaaf5c59e3c5df50b1ec3ab56dc1dec53"
+    },
+    "epoch_pass": {
+      "module": "engine.py",
+      "ast_sha256": "82ebd39165c5a2d1978b4dacca60490ba6a3961337920e183ba87e75db0601a4"
+    },
+    "metrics": {
+      "module": "engine.py",
+      "ast_sha256": "4dd4cf0404e9baffbdbdfc2e71d3c5bc689147bad5981f3c9d613d0fd7ae60ac"
+    },
+    "save_checkpoint": {
+      "module": "engine.py",
+      "ast_sha256": "d6b8e3c99451f3fcd47d513c1b4399cbf5366f5d5c674ba7a5e9f2e7bdba5508"
+    },
+    "rng_state": {
+      "module": "engine.py",
+      "ast_sha256": "0dee384fc3776608f4f84aaed928f64de2c8c2d95c7b0f0f39195bcdea023583"
+    },
+    "restore_rng": {
+      "module": "engine.py",
+      "ast_sha256": "dbd7ba62808372bf0503c59358e0875902f60adfa35abca0a392ca4edbf64c03"
+    },
+    "train_run": {
+      "module": "engine.py",
+      "ast_sha256": "ae0fa643ef3d3b7f0d355bbbf7777d9d9546504716c7aeb006570433ac05ee69"
+    }
+  },
+  "notebooks": {
+    "severity": {
+      "filename": "transformer-models-severity(1).ipynb",
+      "sha256": "1b3bc9b440edecc7b97c9a2b386a4d47e66e4b1fc588d6786b068a473b21c389",
+      "compared_cells": [
+        6,
+        10,
+        12,
+        14
+      ]
+    },
+    "poor_dilation": {
+      "filename": "transformer-models-poor-dilation(2).ipynb",
+      "sha256": "e9d2ae92583254e0dfc1228798435058588874c0df7b36c9a201be08b05fdfce",
+      "compared_cells": [
+        6,
+        10,
+        12,
+        14
+      ]
+    }
+  },
+  "notes": [
+    "Original reference hashes are retained. The comparison trainer adds the device adapter, restores RNG state for all visible CUDA devices, and uses one data stream across backbones."
+  ],
+  "authorized_modified_definitions": [
+    "fetch",
+    "attach_images",
+    "FrameDataset",
+    "make_loaders",
+    "epoch_pass",
+    "restore_rng",
+    "train_run",
+    "TransformerClassifier"
+  ]
+}

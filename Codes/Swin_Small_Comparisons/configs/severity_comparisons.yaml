@@ -1,0 +1,35 @@
+# Shared 448-pixel protocol for the two severity backbones.
+task: severity
+model: Swin-Small
+run:
+  name: swin_small_severity_comparisons_448
+  output_dir: ../outputs
+  cache_dir: ../data_cache
+  gpu: '0'
+data:
+  images_zip: null
+  metadata: null
+training:
+  seed: 42
+  epochs: 30
+  batch_size: 8
+  workers: 2
+  patience: 5
+  backbone_lr: 1.0e-05
+  head_lr: 0.0001
+  weight_decay: 0.01
+  tune_mode: all
+  tune_depth: 4
+  l2_features: true
+preprocessing:
+  input_size: 448
+  interpolation: bicubic
+  normalization: imagenet
+  padding:
+    method: edge_blend
+    transition_fraction: 0.10
+    blur_radius: 2.0
+save:
+  epoch_predictions: true
+  test_originals: true
+  test_inputs: true
