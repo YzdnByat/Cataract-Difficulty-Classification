@@ -26,6 +26,8 @@ class Preset:
     train_source: str | None = None
     evaluation_source: str | None = None
     color_constancy: str = 'none'
+    allowed_sources: tuple[str, ...] | None = None
+    selection_metric: str = 'val_macro_f1'
 
 
 PRESETS = {
@@ -34,6 +36,8 @@ PRESETS = {
     'pooled3': Preset((0, 1, 2), evaluation_source='Farabi'),
     'gray_world': Preset(color_constancy='gray_world'),
     'white_patch': Preset(color_constancy='white_patch'),
+    'gray_world_val_loss': Preset(color_constancy='gray_world', selection_metric='val_loss'),
+    'farabi_youtube': Preset(allowed_sources=('Farabi', 'YouTube_external')),
 }
 
 
@@ -120,6 +124,8 @@ def select_preset(master, preset_name):
     """Filter after splitting, so each video's assignment is shared by every preset."""
     preset = PRESETS[preset_name]
     mask = master.label.isin(preset.labels)
+    if preset.allowed_sources is not None:
+        mask &= master.source.isin(preset.allowed_sources)
     if preset.train_source is not None:
         mask &= master.split.ne('train') | master.source.eq(preset.train_source)
     if preset.evaluation_source is not None:
@@ -145,6 +151,10 @@ def prepare_preset(data_dir, preset_name, task_dir):
         'shared_split_hash': reference['shared_split_hash'],
         'run_split_hash': table_hash(frame, SHARED_COLUMNS),
     }
+    if preset.allowed_sources is not None:
+        specification['allowed_sources'] = list(preset.allowed_sources)
+    if preset.selection_metric != 'val_macro_f1':
+        specification['selection_metric'] = preset.selection_metric
     protocol = task_dir / 'experiment.json'
     manifest = task_dir / 'split_manifest.csv'
     if protocol.exists():

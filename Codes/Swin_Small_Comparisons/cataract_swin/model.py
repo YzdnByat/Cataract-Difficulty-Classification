@@ -2,17 +2,19 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 import timm
+from .config import DEFAULT_MODEL, MODEL_REGISTRY as REGISTRY
 from .io_utils import require
-from .preprocessing import MODEL_NAME
 
-REGISTRY = {'Swin-Small': MODEL_NAME}
 TUNE_OVERRIDES = {}
 
-class TransformerClassifier(nn.Module):
+
+class ImageClassifier(nn.Module):
     def __init__(self, name, classes, cfg, pretrained=True, input_size=448):
         super().__init__()
+        # Swin builds its patch grid at construction. ResNet pools arbitrary spatial sizes.
+        kwargs = {'img_size': input_size} if name == DEFAULT_MODEL else {}
         self.backbone = timm.create_model(REGISTRY[name], pretrained=pretrained, num_classes=0,
-                                          img_size=input_size)
+                                          **kwargs)
         self.binary = len(classes)==2
         self.classifier = nn.Linear(self.backbone.num_features, 1 if self.binary else len(classes))
         self.l2 = cfg['l2_features']
@@ -25,9 +27,11 @@ class TransformerClassifier(nn.Module):
                 require(1<=self.depth<=len(self.backbone.blocks), 'Invalid block depth')
                 self.unfrozen_modules = list(self.backbone.blocks[-self.depth:])
             elif self.mode == 'last_stages':
-                require(hasattr(self.backbone,'layers'), 'last_stages requires Swin')
-                require(1<=self.depth<=len(self.backbone.layers), 'Invalid stage depth')
-                self.unfrozen_modules = list(self.backbone.layers[-self.depth:])
+                stages = (list(self.backbone.layers) if name == DEFAULT_MODEL else
+                          [self.backbone.layer1, self.backbone.layer2,
+                           self.backbone.layer3, self.backbone.layer4])
+                require(1<=self.depth<=len(stages), 'Invalid stage depth')
+                self.unfrozen_modules = stages[-self.depth:]
             else:
                 require(self.mode=='head', 'Unknown fine-tuning mode')
             if self.mode != 'head':
@@ -53,3 +57,7 @@ class TransformerClassifier(nn.Module):
     def forward(self,x):
         logits = self.classifier(self.embeddings(x))
         return logits.squeeze(-1) if self.binary else logits
+
+
+# Keep the import used by older Swin analysis scripts.
+TransformerClassifier = ImageClassifier

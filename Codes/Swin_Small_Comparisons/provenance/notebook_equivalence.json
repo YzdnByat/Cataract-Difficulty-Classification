@@ -105,7 +105,7 @@
     }
   },
   "notes": [
-    "13 original function/class bodies remain unchanged. Resolution and earlier authorized changes are documented in authorized_changes.json. Original reference hashes are retained."
+    "Original reference hashes are retained. The comparison trainer adds the device adapter, restores RNG state for all visible CUDA devices, and uses one data stream across backbones."
   ],
   "authorized_modified_definitions": [
     "fetch",
@@ -113,6 +113,7 @@
     "FrameDataset",
     "make_loaders",
     "epoch_pass",
+    "restore_rng",
     "train_run",
     "TransformerClassifier"
   ]

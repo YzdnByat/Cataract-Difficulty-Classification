@@ -7,9 +7,10 @@ from torch import nn
 import timm, sklearn, torchvision
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, confusion_matrix, roc_auc_score
 from .io_utils import require, file_hash, table_hash, save_json
-from .model import TransformerClassifier, REGISTRY
+from .config import DEFAULT_MODEL, model_preprocessing_metadata
+from .model import ImageClassifier, REGISTRY
 from .transforms import FrameDataset, make_loaders
-from .preprocessing import validate_preprocessing, preprocessing_metadata, validate_pretrained_contract
+from .preprocessing import IMAGENET_MEAN, IMAGENET_STD, validate_preprocessing, validate_pretrained_contract
 
 CONFIG = {}
 TUNE_OVERRIDES = {}
@@ -34,6 +35,7 @@ def seed_all(seed):
 def epoch_pass(model,loader,device,optimizer=None,scaler=None):
     training=optimizer is not None
     model.train(training)
+    forward_model = nn.DataParallel(model) if device.type == 'cuda' and torch.cuda.device_count() == 2 else model
     criterion=nn.BCEWithLogitsLoss() if model.binary else nn.CrossEntropyLoss()
     total,count=0.,0
     labels_list,probs_list=[],[]
@@ -43,7 +45,7 @@ def epoch_pass(model,loader,device,optimizer=None,scaler=None):
             target=labels.float() if model.binary else labels.long()
             if training: optimizer.zero_grad(set_to_none=True)
             with torch.autocast(device_type=device.type,enabled=training and device.type=='cuda'):
-                logits=model(images); loss=criterion(logits,target)
+                logits=forward_model(images); loss=criterion(logits,target)
             require(torch.isfinite(loss).item(),'Non-finite loss')
             if training:
                 scaler.scale(loss).backward(); scaler.step(optimizer); scaler.update()
@@ -76,23 +78,26 @@ def rng_state():
 
 def restore_rng(state):
     random.setstate(state['python']); np.random.set_state(state['numpy']); torch.set_rng_state(state['torch'])
-    if torch.cuda.is_available(): torch.cuda.set_rng_state(state['cuda'][0], device=0)
+    if torch.cuda.is_available(): torch.cuda.set_rng_state_all(state['cuda'])
 
 def record_epoch(state):
     """Replaced by the recorder in the worker; no model operations here."""
     pass
 
-def train_run(task,name,df):
+def train_run(task,name,df,*,data_seed=None):
     seed_all(CONFIG['seed'])
     require(torch.cuda.is_available(),'Enable a Kaggle GPU before training')
     device=torch.device('cuda:0')
     folder=OUTPUT_ROOT/task/name.replace('/','_'); folder.mkdir(parents=True,exist_ok=True)
     mode,depth=TUNE_OVERRIDES.get(name,(CONFIG['tune_mode'],CONFIG['tune_depth']))
     classes=SOURCES[task]['classes']
+    selection=CONFIG.get('selection_metric','val_macro_f1')
+    spec=model_preprocessing_metadata(PREPROCESSING,name)
     protocol=dict(task=task,model=name,timm_name=REGISTRY[name],classes=classes,config=CONFIG,
                   tuning=[mode,depth],split_hash=table_hash(df,['file_name','video_id','label','image_sha256','split']),
-                  preprocessing=preprocessing_metadata(PREPROCESSING),
-                  selection_metric='val_macro_f1',selection_mode='max',checkpoint_policy='best_only_padded_v3',
+                  preprocessing=spec,cuda_device_count=torch.cuda.device_count(),data_sampling_seed=data_seed,
+                  selection_metric=selection,selection_mode='min' if selection=='val_loss' else 'max',
+                  checkpoint_policy='best_only_padded_v3',
                   early_stopping_metric='val_loss',
                   versions=dict(torch=torch.__version__,torchvision=torchvision.__version__,timm=timm.__version__,sklearn=sklearn.__version__,
                                 numpy=np.__version__,python=platform.python_version()))
@@ -105,13 +110,19 @@ def train_run(task,name,df):
         require(all((folder/p).is_file() and (folder/p).stat().st_size for p in required),'Incomplete completed run')
         print('Skipping completed',task,name); return
     best_path=folder/'best.pth'
-    model=TransformerClassifier(name,classes,CONFIG,pretrained=not best_path.exists(),
-                                input_size=PREPROCESSING['input_size']).to(device)
-    require(tuple(model.backbone.patch_embed.img_size)==(PREPROCESSING['input_size'],)*2,
-            'Model and preprocessing input sizes differ')
-    validate_pretrained_contract(model.backbone.pretrained_cfg,PREPROCESSING)
-    save_json(folder/'preprocessing.json',preprocessing_metadata(PREPROCESSING))
-    loaders=make_loaders(df,CONFIG,PREPROCESSING)
+    model=ImageClassifier(name,classes,CONFIG,pretrained=not best_path.exists(),
+                          input_size=PREPROCESSING['input_size']).to(device)
+    pretrained_cfg=model.backbone.pretrained_cfg
+    if name==DEFAULT_MODEL:
+        require(tuple(model.backbone.patch_embed.img_size)==(PREPROCESSING['input_size'],)*2,
+                'Model and preprocessing input sizes differ')
+        validate_pretrained_contract(pretrained_cfg,PREPROCESSING)
+    else:
+        # Use the shared bicubic pipeline at 448, with the weights' ImageNet statistics.
+        require(tuple(pretrained_cfg['mean'])==IMAGENET_MEAN and tuple(pretrained_cfg['std'])==IMAGENET_STD,
+                'ResNet50 weights must use the shared ImageNet normalization.')
+    save_json(folder/'preprocessing.json',spec)
+    loaders=make_loaders(df,CONFIG,PREPROCESSING,data_seed=data_seed)
     backbone=[p for p in model.backbone.parameters() if p.requires_grad]
     groups=[{'params':model.classifier.parameters(),'lr':CONFIG['head_lr'],'name':'head'}]
     if backbone: groups.append({'params':backbone,'lr':CONFIG['backbone_lr'],'name':'backbone'})
@@ -120,7 +131,7 @@ def train_run(task,name,df):
     scheduler=torch.optim.lr_scheduler.CosineAnnealingLR(optimizer,T_max=CONFIG['epochs'])
     scaler=torch.amp.GradScaler('cuda')
     (folder/'trainable_parameters.txt').write_text('\n'.join(n for n,p in model.named_parameters() if p.requires_grad))
-    save_json(folder/'pretrained_config.json',model.backbone.pretrained_cfg)
+    save_json(folder/'pretrained_config.json',pretrained_cfg)
     start,best_loss,best_f1,bad,history=0,float('inf'),float('-inf'),0,[]
     if best_path.exists():
         state=torch.load(best_path,map_location='cpu',weights_only=False)
@@ -132,6 +143,9 @@ def train_run(task,name,df):
         print('Resuming from the saved best epoch; later unsaved epochs will be repeated:',start)
     for epoch in range(start,CONFIG['epochs']):
         if bad>=CONFIG['patience']: break
+        if data_seed is not None:
+            # Match the data stream across backbones and after resuming from best.pth.
+            loaders['train'].generator.manual_seed(data_seed + epoch)
         epoch_lrs={g['name']+'_lr':float(g['lr']) for g in optimizer.param_groups}
         train_loss,yt,pt=epoch_pass(model,loaders['train'],device,optimizer,scaler)
         val_loss,yv,pv=epoch_pass(model,loaders['val'],device)
@@ -140,23 +154,26 @@ def train_run(task,name,df):
                             train_accuracy=float(accuracy_score(yt,pt.argmax(1))),
                             val_accuracy=float(accuracy_score(yv,pv.argmax(1))),val_macro_f1=val_f1,**epoch_lrs))
         # Preserve the original loss-based early-stopping rule.
-        if val_loss<best_loss: best_loss,bad=val_loss,0
+        loss_improved=val_loss<best_loss
+        if loss_improved: best_loss,bad=val_loss,0
         else: bad+=1
         scheduler.step()
-        # Strict improvement: an exact F1 tie retains the earlier checkpoint.
-        if val_f1>best_f1:
-            best_f1=val_f1
+        f1_improved=val_f1>best_f1
+        if f1_improved: best_f1=val_f1
+        # An exact tie retains the earlier checkpoint.
+        if (loss_improved if selection=='val_loss' else f1_improved):
             save_checkpoint(best_path,dict(model={k:v.detach().cpu().clone() for k,v in model.state_dict().items()},
                 optimizer=optimizer.state_dict(),scheduler=scheduler.state_dict(),scaler=scaler.state_dict(),
-                epoch=epoch+1,epoch_index=epoch,val_loss=val_loss,best_macro_f1=best_f1,
+                epoch=epoch+1,epoch_index=epoch,val_loss=val_loss,val_macro_f1=val_f1,best_macro_f1=best_f1,
                 best_loss=best_loss,bad_epochs=bad,history=history.copy(),rng=rng_state(),protocol=protocol))
         record_epoch(dict(epoch=epoch,history=history,best_loss=best_loss,best_macro_f1=best_f1,bad_epochs=bad))
         pd.DataFrame(history).to_csv(folder/'history.csv',index=False)
         print(task,name,history[-1],flush=True)
     checkpoint=torch.load(best_path,map_location='cpu',weights_only=False)
     model.load_state_dict(checkpoint['model'])
-    result=dict(task=task,model=name,best_epoch=checkpoint['epoch'],selection_metric='val_macro_f1',
-                best_val_macro_f1=checkpoint['best_macro_f1'],selected_val_loss=checkpoint['val_loss'],
+    result=dict(task=task,model=name,best_epoch=checkpoint['epoch'],selection_metric=selection,
+                best_val_macro_f1=best_f1,selected_val_macro_f1=checkpoint['val_macro_f1'],
+                selected_val_loss=checkpoint['val_loss'],
                 minimum_val_loss_seen=best_loss)
     for split in ['val','test']:
         loss,y,p=epoch_pass(model,loaders[split],device)
@@ -167,7 +184,7 @@ def train_run(task,name,df):
         for c in range(len(classes)): predictions[f'prob_{c}']=p[:,c]
         predictions.to_csv(folder/f'{split}_predictions.csv',index=False)
     save_json(folder/'metrics.json',result)
-    save_json(folder/'complete.json',{'best_epoch':checkpoint['epoch'],'selection_metric':'val_macro_f1','split_hash':protocol['split_hash']})
+    save_json(folder/'complete.json',{'best_epoch':checkpoint['epoch'],'selection_metric':selection,'split_hash':protocol['split_hash']})
     print(json.dumps(result,indent=2))
     del model,optimizer,scheduler,scaler,checkpoint,loaders
     gc.collect(); torch.cuda.empty_cache()

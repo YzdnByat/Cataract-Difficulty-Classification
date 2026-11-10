@@ -50,13 +50,15 @@ def apply_training_pipeline(pipeline, padded_image, *, seed):
 
 
 class TrainingTransform:
-    def __init__(self, preprocessing=None):
+    def __init__(self, preprocessing=None, *, generator=None):
         self.pad = FitPad(preprocessing)
         self.pipeline = build_training_pipeline(self.pad.config['input_size'])
+        self.generator = generator
 
     def __call__(self, image, *, source=None):
-        # Each DataLoader worker already has its own reproducible PyTorch stream.
-        seed = torch.randint(0, 2**32, (), dtype=torch.int64).item()
+        # With workers, DataLoader seeds each process. With zero workers use the
+        # data generator directly to keep augmentation separate from the model.
+        seed = torch.randint(0, 2**32, (), dtype=torch.int64, generator=self.generator).item()
         return apply_training_pipeline(self.pipeline, self.pad(image, source=source), seed=seed)['image']
 
 
@@ -73,12 +75,13 @@ class EvaluationTransform:
 
 
 class FrameDataset(Dataset):
-    def __init__(self, df, augment, preprocessing=None):
+    def __init__(self, df, augment, preprocessing=None, *, generator=None):
         self.df = df.reset_index(drop=True)
         self.paths = tuple(self.df.image_path)
         self.labels = tuple(int(value) for value in self.df.label)
         self.sources = tuple(self.df.source) if 'source' in self.df else (None,) * len(self.df)
-        self.transform = (TrainingTransform if augment else EvaluationTransform)(preprocessing)
+        self.transform = (TrainingTransform(preprocessing, generator=generator) if augment
+                          else EvaluationTransform(preprocessing))
 
     def __len__(self):
         return len(self.paths)
@@ -89,17 +92,21 @@ class FrameDataset(Dataset):
         return tensor, self.labels[index]
 
 
-def make_loaders(df, cfg, preprocessing=None):
+def make_loaders(df, cfg, preprocessing=None, *, data_seed=None):
     loaders = {}
     for split in ['train', 'val', 'test']:
-        dataset = FrameDataset(df[df.split == split], split == 'train', preprocessing)
+        generator = None
+        if split == 'train' and data_seed is not None:
+            generator = torch.Generator().manual_seed(data_seed)
+        dataset = FrameDataset(df[df.split == split], split == 'train', preprocessing,
+                               generator=generator if cfg['workers'] == 0 else None)
         sampler = None
         if split == 'train':
             counts = dataset.df.label.value_counts()
             weights = dataset.df.label.map(lambda value: 1 / counts[value]).to_numpy()
             sampler = WeightedRandomSampler(
-                torch.as_tensor(weights, dtype=torch.double), len(dataset), replacement=True)
+                torch.as_tensor(weights, dtype=torch.double), len(dataset), replacement=True, generator=generator)
         loaders[split] = DataLoader(
             dataset, batch_size=cfg['batch_size'], sampler=sampler, shuffle=False,
-            num_workers=cfg['workers'], pin_memory=True, drop_last=False)
+            num_workers=cfg['workers'], pin_memory=True, drop_last=False, generator=generator)
     return loaders

@@ -16,7 +16,8 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report,confusion_matrix,roc_curve,auc
 from .io_utils import save_json,file_hash
 from .tracking import write_csv
-from .preprocessing import FitPad, preprocessing_metadata
+from .config import DEFAULT_MODEL, MODEL_REGISTRY, model_preprocessing_metadata
+from .preprocessing import FitPad
 
 plt.rcParams.update({'font.size':10,'axes.spines.top':False,'axes.spines.right':False})
 
@@ -33,7 +34,7 @@ def save_figure(fig,path):
     plt.close(fig)
 
 
-def history_plots(folder):
+def history_plots(folder, model=DEFAULT_MODEL):
     path=folder/'history.csv'
     if not path.exists():return
     history=pd.read_csv(path)
@@ -54,7 +55,7 @@ def history_plots(folder):
     for ax in axs.flat:
         ax.set_xlabel('Epoch');ax.grid(alpha=.2)
         if ax.get_legend_handles_labels()[0]:ax.legend(fontsize=9)
-    fig.suptitle('Swin-Small training history\nTraining metrics use the weighted, augmented training stream.',fontsize=13)
+    fig.suptitle(f'{model} training history\nTraining metrics use the weighted, augmented training stream.',fontsize=13)
     fig.tight_layout();save_figure(fig,folder/'learning_curves.png')
     lr_cols=['epoch']+[c for c in ['head_lr','backbone_lr'] if c in history]
     write_csv(history[lr_cols],folder/'learning_rates.csv')
@@ -167,11 +168,11 @@ def restore_review_fields(frame,path):
     return frame
 
 
-def copy_test_frames(frame,classes,folder,options,preprocessing=None):
+def copy_test_frames(frame,classes,folder,options,preprocessing=None,*,model=DEFAULT_MODEL):
     """Copy original bytes and exactly the same padded RGB view used by test."""
     frame=frame.copy()
     transform=FitPad(preprocessing)
-    spec=preprocessing_metadata(preprocessing)
+    spec=model_preprocessing_metadata(preprocessing,model)
     save_json(folder/'test_images'/'preprocessing.json',spec)
     paths=[];inputs=[]
     for row in frame.itertuples():
@@ -223,7 +224,7 @@ def make_gallery(frame,classes,path):
             if r[key]:r[key]=quote(r[key],safe='/')
     payload=json.dumps({'classes':classes,'rows':rows},ensure_ascii=False).replace('<','\\u003c').replace('>','\\u003e')
     template='''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Swin-Small test predictions</title><style>
+<title>Test predictions</title><style>
 body{font:15px system-ui,sans-serif;margin:24px;color:#172635;background:#f5f7fa}h1{font-size:24px}label{display:inline-block;margin:6px 16px 6px 0}select,input{padding:7px;border:1px solid #a9b7c6;border-radius:4px}#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}.card{background:white;padding:12px;border:1px solid #cbd4df;border-radius:7px}.wrong{border-top:4px solid #b34238}.right{border-top:4px solid #3f6c65}.card img{width:100%;height:245px;object-fit:contain;background:#121820}.meta{font-size:13px;overflow-wrap:anywhere;line-height:1.5}.image-label{font-size:12px;color:#596779}#count{margin:16px 0}.controls{position:sticky;top:0;background:#f5f7fa;padding:8px 0;z-index:2}a{color:#1e5a85}</style>
 <h1>Test predictions from the validation-selected checkpoint</h1><p>Original frames and aspect-preserving padded model-input RGB views (before normalization). Reference labels are from the supplied metadata. Review causes in test_images/index.csv.</p>
 <div class="controls"><label>Reference <select id="truth"></select></label><label>Prediction <select id="pred"></select></label><label>Outcome <select id="outcome"><option value="all">All</option><option value="wrong" selected>Errors</option><option value="right">Correct</option></select></label><label>Search <input id="search" placeholder="Video or filename"></label><label>Sort <select id="sort"><option value="confidence">Confidence: high first</option><option value="video">Video</option></select></label></div><div id="count"></div><div id="grid"></div>
@@ -237,11 +238,12 @@ const truth=document.getElementById('truth'),pred=document.getElementById('pred'
 
 def export_analysis(folder,manifest,classes,options,preprocessing=None):
     folder=Path(folder);folder.mkdir(parents=True,exist_ok=True)
-    spec=preprocessing_metadata(preprocessing)
+    model=folder.name if folder.name in MODEL_REGISTRY else DEFAULT_MODEL
+    spec=model_preprocessing_metadata(preprocessing,model)
     protocol_path=folder/'protocol.json'
     if protocol_path.exists() and json.loads(protocol_path.read_text()).get('preprocessing')!=spec:
         raise ValueError('Report preprocessing differs from the trained model protocol. Use the original run code/configuration.')
-    history_plots(folder)
+    history_plots(folder,model)
     result={}
     for split in ['val','test']:
         path=folder/f'{split}_predictions.csv'
@@ -258,14 +260,15 @@ def export_analysis(folder,manifest,classes,options,preprocessing=None):
                        'macro_f1':float(report['macro avg']['f1-score']),'weighted_f1':float(report['weighted avg']['f1-score']),
                        'roc':roc}
         if split=='test':
-            copied=copy_test_frames(frame,classes,folder,options,preprocessing)
+            copied=copy_test_frames(frame,classes,folder,options,preprocessing,model=model)
             expected=len(frame)
             for key,enabled in [('copied_original',options['test_originals']),('model_input_rgb',options['test_inputs'])]:
                 if enabled and sum((folder/p).is_file() for p in copied[key])!=expected:
                     raise ValueError(f'Incomplete test-image export: {key}')
     save_json(folder/'analysis_summary.json',result)
     original=json.loads((folder/'metrics.json').read_text())
-    row={k:original[k] for k in ['task','model','best_epoch','selection_metric','best_val_macro_f1','selected_val_loss','minimum_val_loss_seen','best_val_loss'] if k in original}
+    row={k:original[k] for k in ['task','model','best_epoch','selection_metric','best_val_macro_f1',
+                                 'selected_val_macro_f1','selected_val_loss','minimum_val_loss_seen','best_val_loss'] if k in original}
     for split in ['val','test']:
         row.update({split+'_'+k:v for k,v in result[split].items() if k!='roc'})
     write_csv(pd.DataFrame([row]),folder.parent/'summary.csv')

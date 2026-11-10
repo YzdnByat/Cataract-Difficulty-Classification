@@ -1,8 +1,9 @@
-"""Prepare shared data, inspect Noor corrections or compare completed runs."""
+"""Prepare severity data, run model comparisons and report matching test cohorts."""
 import argparse
 from pathlib import Path
 
-from cataract_swin.experiments import prepare_data
+from cataract_swin.config import MODEL_REGISTRY
+from cataract_swin.experiments import PRESETS, prepare_data
 
 
 def main(argv=None):
@@ -26,6 +27,13 @@ def main(argv=None):
                          help='A run folder or its parent. Repeat for separate saved outputs.')
     compare.add_argument('--output-dir', type=Path, required=True)
 
+    suite = subparsers.add_parser('run', help='Train and archive each selected model and preset.')
+    suite.add_argument('--data-dir', type=Path, required=True)
+    suite.add_argument('--output-dir', type=Path, required=True)
+    suite.add_argument('--models', nargs='+', choices=MODEL_REGISTRY, default=list(MODEL_REGISTRY))
+    suite.add_argument('--presets', nargs='+', choices=PRESETS, default=list(PRESETS))
+    suite.add_argument('--gpu', default='0,1', help='One GPU index or two indices, for example 0,1.')
+
     args = parser.parse_args(argv)
     if args.command == 'prepare':
         prepare_data(args.data_dir, images_zip=args.images_zip, metadata=args.metadata,
@@ -33,9 +41,12 @@ def main(argv=None):
     elif args.command == 'preview':
         from cataract_swin.color_preview import preview_noor
         preview_noor(args.data_dir, args.output_dir, count=args.count)
-    else:
+    elif args.command == 'compare':
         from cataract_swin.comparison import compare_runs
         compare_runs(args.runs_dir, args.output_dir)
+    else:
+        from cataract_swin.suite import run_suite
+        return run_suite(args.data_dir, args.output_dir, args.models, args.presets, args.gpu)
     return 0
 
 

@@ -1,30 +1,46 @@
-# Swin-Small severity comparisons
+# Swin-Small and ResNet50 severity comparisons
 
-The presets use the current **448 × 448** Swin-Small setup with the same edge-blended padding, Albumentations training transforms, ImageNet normalization, and training loop. The backbone is constructed at 448 pixels. The default comparison config uses batch size 8, seed 42, up to 30 epochs, and the best validation macro-F1 checkpoint. The existing validation-loss stopping rule, optimizer, cosine schedule, and weighted training sampler are used.
+Both models use the same severity experiment definitions, data pipeline and training loop. Only the backbone, its pretrained weights and the width of its pooled features differ within a preset. Both heads use L2-normalized pooled features followed by a linear classifier.
+
+| Model | Pinned timm backbone and weights |
+|---|---|
+| Swin-Small | `swin_small_patch4_window7_224.ms_in22k_ft_in1k` |
+| ResNet50 | `resnet50.tv2_in1k` (TorchVision ImageNet-1K V2 weights) |
+
+These weights use different pretraining recipes. The experiment compares the two pretrained models under a matched fine-tuning protocol.
 
 ## Experiments
 
-| Preset | Training cohort | Validation and test cohort | Color correction |
-|---|---|---|---|
-| `baseline` | All sources, classes 0–3 | All sources, classes 0–3 | None |
-| `farabi3` | Farabi, classes 0–2 | Farabi, classes 0–2 | None |
-| `pooled3` | All available sources for classes 0–2 | Farabi, classes 0–2 | None |
-| `gray_world` | All sources, classes 0–3 | All sources, classes 0–3 | Gray World on Noor frames |
-| `white_patch` | All sources, classes 0–3 | All sources, classes 0–3 | White Patch on Noor frames |
+| Preset | Training cohort | Validation and test cohort | Color correction | Checkpoint |
+|---|---|---|---|---|
+| `baseline` | All sources, classes 0–3 | All sources, classes 0–3 | None | Max validation macro-F1 |
+| `farabi3` | Farabi, classes 0–2 | Farabi, classes 0–2 | None | Max validation macro-F1 |
+| `pooled3` | Farabi plus 181 Noor class-0 frames, classes 0–2 | Farabi, classes 0–2 | None | Max validation macro-F1 |
+| `gray_world` | All sources, classes 0–3 | All sources, classes 0–3 | Gray World on Noor | Max validation macro-F1 |
+| `white_patch` | All sources, classes 0–3 | All sources, classes 0–3 | White Patch on Noor | Max validation macro-F1 |
+| `gray_world_val_loss` | All sources, classes 0–3 | All sources, classes 0–3 | Gray World on Noor | Min validation loss |
+| `farabi_youtube` | Farabi and YouTube, classes 0–3 | Farabi and YouTube, classes 0–3 | None | Max validation macro-F1 |
 
-The label order is 0 low nuclear density, 1 dense, 2 mature, and 3 brunescent. The source rule uses `S1` for Farabi, `S2` for Noor, and `Brunescent_*` for YouTube/external, following the image audit. The severity data contains Noor frames only for class 0 and YouTube frames only for class 3.
+The label order is 0 low nuclear density, 1 dense, 2 mature, and 3 brunescent. Source comes from the existing metadata rule: `S1` is Farabi, `S2` is Noor, and `Brunescent_*` is YouTube/external. Gray World and White Patch operate on decoded Noor RGB before resize and padding in every split that includes Noor. The original dataset's Noor frames already reach 255 per channel, so White Patch is a no-op on this archive.
 
-Preparation validates the original severity XLSX and ZIP and makes a shared 70/15/15 video-level split using seed 42. The current dataset yields 1,795 train, 385 validation, and 361 test frames. All presets filter this same manifest after the split. `farabi3` uses 1,561 train, 330 validation, and 304 test frames. `pooled3` adds 181 Noor class-0 training frames to `farabi3` and uses the same Farabi validation and test frames. The added frames also change the amount of training data and the number of sampled updates per epoch.
+Preparation validates the original severity XLSX and image ZIP, then creates one shared split at seed 42. It yields 1,795 training, 385 validation and 361 test frames. Every preset filters that manifest after splitting. The split uses the historical metadata `video_id` for comparability with prior runs. Some YouTube groups share a source recording, including across validation and test, so this split cannot establish independent-video generalization for Brunescent.
+
+## Shared recipe
+
+- Proportional bicubic resize and Edge-Blend padding to `448 × 448`, the existing Albumentations train transforms, and ImageNet normalization. Evaluation uses the same deterministic preprocessing in both models.
+- One weighted draw per training frame per epoch, with replacement and weight `1 / training class count`. For paired runs, each epoch's sampler and augmentation seeds come from a data generator independent of model initialization and dropout. Both backbones receive the same draws and augmentation for the same preset, epoch and worker settings. This stream differs from the historical global RNG stream.
+- Batch size 8, two data workers, up to 30 epochs, all backbone layers trainable, and mixed precision during CUDA training. Cross-entropy, AdamW with weight decay 0.01, learning rates `1e-5` for the backbone and `1e-4` for the head, and cosine annealing.
+- Early stopping monitors validation loss with patience 5 for every preset. `best.pth` holds only the checkpoint selected by that preset. Resume starts from that checkpoint and repeats later unsaved epochs.
 
 ## Run on Kaggle
 
-Upload the project files under `Codes/swin-small-comparisons/` in the repository. Import the separate `Swin_Small_Comparisons_Kaggle.ipynb` launcher into Kaggle. Enable Internet and select a GPU for training. Set `ACTION` to a preset name for one training run, `preview` for the color comparison panels, or `compare` for the report. The default action is `baseline`. The launcher passes the audited severity Drive IDs to the preparation command and writes outputs under `/kaggle/working/swin-comparisons`.
+Upload the contents of this project to `Codes/Swin_Small_Comparisons/` in the GitHub repository. Import `Swin_ResNet50_Comparisons_Kaggle.ipynb`. Enable Internet and select GPU T4 ×2 for `GPU = "0,1"`. The notebook clones the project, prepares the severity dataset once, then runs each selected preset for both models in sequence. Each training job uses both GPUs with a total batch size of 8.
 
-To compare separate saved runs, attach their outputs as notebook inputs and set `EXTRA_RUN_ROOTS` to their run folders or the folders directly containing them. The comparison reads saved predictions and split files. It can run without the image archive.
+The default is all 14 model/preset pairs. Set `PRESETS = ["baseline"]` to run the baseline pair, or select a subset for one session. Download the archives from `/kaggle/working/swin-resnet50-comparisons/zips/`. The suite writes each archive as soon as that action completes. `action_status.json` records completed and failed actions.
 
 ## Run from the terminal
 
-Install the requirements in an environment with matching CUDA-enabled PyTorch and torchvision. Run the commands from this project folder.
+Install a matched CUDA-enabled PyTorch and torchvision pair, then run these commands from this folder.
 
 ```bash
 python -m pip install -r requirements.txt
@@ -33,41 +49,24 @@ python experiments.py prepare --data-dir ./severity-data \
   --images-zip /path/to/Dataset_Severity_V2.zip \
   --metadata /path/to/Dataset_Severity_V2_1.xlsx
 
-python experiments.py preview --data-dir ./severity-data --output-dir ./outputs/noor-previews
-
-python train.py --preset baseline --data-dir ./severity-data --output-dir ./outputs --gpu 0
-python train.py --preset farabi3 --data-dir ./severity-data --output-dir ./outputs --gpu 0
-python train.py --preset pooled3 --data-dir ./severity-data --output-dir ./outputs --gpu 0
-python train.py --preset gray_world --data-dir ./severity-data --output-dir ./outputs --gpu 0
-python train.py --preset white_patch --data-dir ./severity-data --output-dir ./outputs --gpu 0
-
-python experiments.py compare --runs-dir ./outputs --output-dir ./outputs/comparison
+python experiments.py run --data-dir ./severity-data --output-dir ./comparison-output --gpu 0,1
 ```
 
-For Drive downloads, pass `--images-drive-id` and `--metadata-drive-id` to `prepare` in place of the local paths. Append `--prepare-only` to any training command to check the preset and write its effective config and manifests on CPU. For comparison across output roots, repeat `--runs-dir`, passing one completed run per preset. Training resumes from the saved best epoch when the matching run directory is writable. Later unsaved epochs are repeated.
+The suite accepts `--models Swin-Small ResNet50` and `--presets baseline gray_world` to select runs. For a single model/preset pair:
 
-## Color correction
+```bash
+python train.py --model ResNet50 --preset baseline --data-dir ./severity-data --output-dir ./runs --gpu 0
+python train.py --model Swin-Small --preset baseline --data-dir ./severity-data --output-dir ./runs --gpu 0
+```
 
-Both methods operate on decoded RGB before resize and padding. Gray World scales each channel mean toward the average of the three channel means. White Patch uses separate channel maxima and scales each toward 255. The implementation leaves an all-zero channel at zero and clips and rounds the corrected pixels to 8-bit RGB. Noor frames receive the selected correction consistently in training, validation, and test. Training then uses the current padding and augmentation pipeline.
+Append `--prepare-only` to either command to validate its split and config on CPU. The original `--config` entry point still accepts the standalone severity and poor dilation configurations. Presets belong to the severity task.
 
-The methods estimate channel gains from scene statistics. Actual tissue color and saturated highlights affect those statistics. The preview picks one training frame per Noor video up to the requested count and writes an original / Gray World / White Patch panel and a CSV of channel statistics and changed-pixel fractions. In the audited archive, every Noor frame already reaches 255 in each channel. Classic White Patch produces identical pixels on those 261 frames. [Finlayson and Trezzi, *Shades of Gray and Colour Constancy*](https://doi.org/10.2352/CIC.2004.12.1.art00008)
+For Drive inputs, pass `--images-drive-id` and `--metadata-drive-id` to `prepare` in place of the local paths. To compare runs from separate sessions, unzip the archives and pass each run folder to `experiments.py compare --runs-dir <folder> --runs-dir <folder> --output-dir <report>`.
 
-## Read the comparison
+## Outputs
 
-- `shared_farabi_0_2` uses the same 304 test frames from 86 Farabi videos for every preset. The closed three-class score selects the largest score among classes 0–2. The report also gives native accuracy and counts native class-3 predictions on those frames.
-- `full_4_class` compares the baseline and the two color variants on the same 361 test frames. `noor_class_0` reports class-0 accuracy on the same 41 Noor test frames from nine videos.
-- Use `farabi3` versus `pooled3` to measure the effect of adding the available Noor training examples under the same three-class task and Farabi evaluation cohort. The baseline versus `farabi3` comparison also changes the label space and the checkpoint selection cohort.
-- `comparison_metrics.csv` contains matched-cohort accuracy and macro-F1. `comparison_deltas.csv` expresses differences as candidate minus reference in percentage points. `shared_farabi_predictions.csv` preserves the frame identities and both closed and native predictions.
+The suite saves `runs/<model>__<preset>/` and `zips/<model>__<preset>.zip`. Each run includes its effective config, environment, shared and filtered split manifests, video assignments, training logs, learning curves, best checkpoint, prediction probabilities, ROC, confusion matrices and both original and model-input test images. The suite also archives the Noor color preview and comparison report.
 
-Each training run writes its effective config, shared and filtered split manifests, source/class counts, training logs, best checkpoint, validation/test probabilities, learning curves, confusion matrices, per-class reports, and test-frame audit to `<output-dir>/<preset>/`. `archive_results.py` can archive a completed run for download.
-
-## Project entry points
-
-| File | Purpose |
-|---|---|
-| `experiments.py` | Data preparation, Noor preview, and saved-run comparison commands |
-| `train.py` | Launch one preset on a GPU |
-| `configs/severity_comparisons.yaml` | Shared training and preprocessing defaults |
-| `cataract_swin/color_constancy.py` | Gray World and White Patch on decoded RGB |
-| `cataract_swin/experiments.py` | Preset definitions and shared video split handling |
-| `cataract_swin/comparison.py` | Matched held-out reports |
+- `comparison_metrics.csv` contains accuracy and macro-F1 on matched cohorts. `shared_farabi_0_2` uses the same 304 Farabi frames for all presets, with scores restricted to classes 0–2. It also reports native accuracy and native class-3 calls.
+- `full_4_class` contains the common 361 test frames for the four-class presets that include Noor. `shared_farabi_youtube_0_3` uses the same 320 frames to compare four-class runs with and without Noor.
+- `comparison_deltas.csv` compares presets within a model. `comparison_backbone_deltas.csv` compares ResNet50 minus Swin-Small for the same preset and cohort, in percentage points.

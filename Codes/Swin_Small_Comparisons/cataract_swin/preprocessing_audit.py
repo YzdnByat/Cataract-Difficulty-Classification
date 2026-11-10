@@ -3,12 +3,13 @@ from pathlib import Path
 import pandas as pd
 from PIL import Image, ImageDraw, ImageOps
 from .io_utils import save_json
-from .preprocessing import FitPad, geometry, preprocessing_metadata
+from .config import DEFAULT_MODEL, model_preprocessing_metadata
+from .preprocessing import FitPad, geometry
 
 
-def save_preprocessing_audit(manifest, classes, task_dir, config):
+def save_preprocessing_audit(manifest, classes, task_dir, config, *, model=DEFAULT_MODEL):
     task_dir = Path(task_dir)
-    spec = preprocessing_metadata(config)
+    spec = model_preprocessing_metadata(config, model)
     save_json(task_dir/'preprocessing.json', spec)
     records = []
     for row in manifest.itertuples():

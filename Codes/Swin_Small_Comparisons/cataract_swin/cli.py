@@ -1,4 +1,4 @@
-"""One task and one isolated GPU worker per invocation."""
+"""Launch one model and experiment in an isolated GPU worker."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -15,7 +15,7 @@ from datetime import datetime,timezone
 import pandas as pd
 import yaml
 from .run_lock import RunLock,LockBusy
-from .config import load_config
+from .config import DEFAULT_MODEL, MODEL_REGISTRY, load_config
 from . import data_io
 from .experiments import DEFAULT_CONFIG, PRESETS, prepare_preset
 from .io_utils import require, save_json
@@ -34,7 +34,7 @@ class Tee:
 
 def implementation_snapshot(run_dir):
     protected=['data_io.py','preprocessing.py','transforms.py','model.py','engine.py',
-               'color_constancy.py','experiments.py']
+               'color_constancy.py','experiments.py','config.py','worker.py']
     hashes={n:hashlib.sha256((Path(__file__).parent/n).read_bytes()).hexdigest() for n in protected}
     path=run_dir/'implementation.json'
     if path.exists() and json.loads(path.read_text())['protected_module_sha256']!=hashes:
@@ -43,7 +43,7 @@ def implementation_snapshot(run_dir):
     source=run_dir/'source';source.mkdir(exist_ok=True)
     shutil.copytree(PROJECT_ROOT/'cataract_swin',source/'cataract_swin',dirs_exist_ok=True,ignore=shutil.ignore_patterns('__pycache__','*.pyc'))
     shutil.copytree(PROJECT_ROOT/'provenance',source/'provenance',dirs_exist_ok=True)
-    for name in ['train.py','experiments.py','requirements.txt','README.md']:
+    for name in ['train.py','experiments.py','archive_results.py','requirements.txt','README.md']:
         if (PROJECT_ROOT/name).is_file():shutil.copy2(PROJECT_ROOT/name,source/name)
 
 
@@ -65,9 +65,10 @@ def save_video_assignments(df,classes,task_dir):
 
 
 def main(argv=None):
-    parser=argparse.ArgumentParser(description='Swin-Small: best-only validation macro-F1 checkpoint with full artifact export.')
+    parser=argparse.ArgumentParser(description='Train Swin-Small or ResNet50 with the shared recipe.')
     parser.add_argument('--config',help='YAML config. The severity comparison defaults apply with --preset.')
     parser.add_argument('--preset',choices=PRESETS,help='Severity comparison experiment.')
+    parser.add_argument('--model',choices=MODEL_REGISTRY,help='Backbone. Defaults to the YAML model or Swin-Small.')
     parser.add_argument('--data-dir',help='Shared severity data prepared by experiments.py prepare.')
     parser.add_argument('--images-zip');parser.add_argument('--metadata')
     parser.add_argument('--output-dir');parser.add_argument('--cache-dir');parser.add_argument('--run-name');parser.add_argument('--gpu')
@@ -84,11 +85,16 @@ def main(argv=None):
     if args.preset and (args.images_zip or args.metadata):
         parser.error('Supply --images-zip and --metadata to experiments.py prepare for a preset.')
     cfg,sources,config_path=load_config(args.config or DEFAULT_CONFIG,images_zip=args.images_zip,metadata=args.metadata,
-        output_dir=args.output_dir,cache_dir=args.cache_dir,run_name=args.run_name or args.preset,gpu=args.gpu)
+        output_dir=args.output_dir,cache_dir=args.cache_dir,run_name=args.run_name or args.preset,gpu=args.gpu,
+        model=args.model)
+    model=cfg['model']
+    if model!=DEFAULT_MODEL and not args.run_name:
+        cfg['run']['name']=f"{model.lower()}__{cfg['run']['name']}"
     if args.preset:
         require(cfg['task']=='severity' and cfg['preprocessing']['input_size']==448,
                 'Comparison presets require the 448-pixel severity configuration.')
         preset=PRESETS[args.preset]
+        cfg['training']['selection_metric']=preset.selection_metric
         sources['severity']['classes']=[sources['severity']['classes'][label] for label in preset.labels]
         cfg['preprocessing'].pop('color_constancy',None)
         if preset.color_constancy!='none':cfg['preprocessing']['color_constancy']=preset.color_constancy
@@ -111,17 +117,19 @@ def main(argv=None):
                 if not previous.is_file():
                     raise ValueError('No saved run configuration. Run preparation/training first.')
                 old=yaml.safe_load(previous.read_text())
-                if old.get('preprocessing')!=cfg['preprocessing'] or old['task']!=task:
-                    raise ValueError('Report preprocessing/task differs from the saved run. Use its original configuration.')
+                if (old.get('preprocessing')!=cfg['preprocessing'] or old['task']!=task
+                        or old.get('model',DEFAULT_MODEL)!=model):
+                    raise ValueError('Report model/task/preprocessing differs from the saved run. Use its original configuration.')
                 df=pd.read_csv(task_dir/'split_manifest.csv')
-                export_analysis(task_dir/'Swin-Small',df,sources[task]['classes'],cfg['save'],cfg['preprocessing'])
+                export_analysis(task_dir/model,df,sources[task]['classes'],cfg['save'],cfg['preprocessing'])
                 return 0
             implementation_snapshot(run_dir)
             previous=run_dir/'effective_config.yaml'
             if previous.exists():
                 old=yaml.safe_load(previous.read_text())
-                if old['training']!=cfg['training'] or old['task']!=task or old.get('preprocessing')!=cfg['preprocessing']:
-                    raise ValueError('Training configuration/task/preprocessing changed. Choose a new run.name.')
+                if (old['training']!=cfg['training'] or old['task']!=task or old.get('preprocessing')!=cfg['preprocessing']
+                        or old.get('model',DEFAULT_MODEL)!=model):
+                    raise ValueError('Training model/task/configuration changed. Choose a new run.name.')
             previous.write_text(yaml.safe_dump(cfg,sort_keys=False))
             shutil.copy2(config_path,run_dir/'requested_config.yaml')
             save_json(task_dir/'run_status.json',{'status':'preparing','task':task})
@@ -137,9 +145,10 @@ def main(argv=None):
                         df=data_io.prepare_task(task)
             save_video_assignments(df,sources[task]['classes'],task_dir)
             from .preprocessing_audit import save_preprocessing_audit
-            save_preprocessing_audit(df,sources[task]['classes'],task_dir,cfg['preprocessing'])
+            save_preprocessing_audit(df,sources[task]['classes'],task_dir,cfg['preprocessing'],model=model)
             save_json(task_dir/'label_map.json',{str(i):c for i,c in enumerate(sources[task]['classes'])})
             settings={'config':cfg['training'],'sources':sources,'task':task,'output_root':str(run_dir),
+                      'model':model,'preset':args.preset,'gpu':cfg['run']['gpu'],
                       'manifest':str(task_dir/'split_manifest.csv'),'save':cfg['save'],'preprocessing':cfg['preprocessing']}
             save_json(task_dir/'worker_settings.json',settings)
             if args.prepare_only:

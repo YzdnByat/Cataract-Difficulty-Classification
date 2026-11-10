@@ -99,12 +99,17 @@ class PaddingTests(unittest.TestCase):
             wrong={**contract,key:value}
             with self.assertRaises(ValueError):validate_pretrained_contract(wrong)
 
-    def test_non_blocking_transfer_is_only_epoch_pass_algorithm_change(self):
+    def test_epoch_pass_math_matches_notebook_with_device_adapter(self):
         tree=ast.parse((ROOT/'cataract_swin/engine.py').read_text())
         node=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='epoch_pass')
+        adapter=ast.parse("forward_model = nn.DataParallel(model) if device.type == 'cuda' and torch.cuda.device_count() == 2 else model").body[0]
+        self.assertEqual(ast.dump(node.body[2]),ast.dump(adapter))
+        del node.body[2]
         for call in ast.walk(node):
             if isinstance(call,ast.Call) and isinstance(call.func,ast.Attribute) and call.func.attr=='to':
                 call.keywords=[kw for kw in call.keywords if kw.arg!='non_blocking']
+            if isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='forward_model':
+                call.func.id='model'
         actual=hashlib.sha256(ast.dump(ast.Module(body=[node],type_ignores=[]),include_attributes=False).encode()).hexdigest()
         reference=json.loads((ROOT/'provenance/notebook_equivalence.json').read_text())
         self.assertEqual(actual,reference['definitions']['epoch_pass']['ast_sha256'])
