@@ -1,0 +1,38 @@
+{
+  "severity": {
+    "zip_id": "1Pd07v0EOtGLux7DAZxjmhuyXPzNuLoJ_",
+    "metadata_id": "1nFPVj2XYvzKXnb8Pp0Ou_Qb_uQwUYdhQ",
+    "ext": "csv",
+    "classes": [
+      "low nuclear density",
+      "dense",
+      "mature",
+      "brunescent"
+    ],
+    "rows": 2540,
+    "videos": 645,
+    "counts": {
+      "0": 795,
+      "1": 1024,
+      "2": 636,
+      "3": 85
+    },
+    "expected_hash": "72706e46c171d2cb2858c8fa51ce449e46909a4388cbbe8f0cd297746751735c"
+  },
+  "poor_dilation": {
+    "zip_id": "1hpCGfGdu-wjB2oi0xFNzb-pF4-mWjbWi",
+    "metadata_id": "1rHw_AlqBx_wdmsKtlJWlzt8-Hs4ZdSmF",
+    "ext": "csv",
+    "classes": [
+      "normal",
+      "poor dilation"
+    ],
+    "rows": 3081,
+    "videos": 700,
+    "counts": {
+      "0": 2541,
+      "1": 540
+    },
+    "expected_hash": "dd8462f5408f9637e63ab7c8f70325f23a90db6a58da5080f81d1f6033150a4f"
+  }
+}
