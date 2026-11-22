@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/YzdnByat/Cataract-Difficulty-Classification",
+  "severity_source_commit": "13e8011d696f442a2872f49e62a38a6907a84722",
+  "severity_source_directory": "Codes/Universal_Severity_Comparisons",
+  "split_reference": "Poor-dilation preflight, seed 42, grouped 70/15/15 holdout"
+}

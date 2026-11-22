@@ -1,0 +1,21 @@
+{
+  "poor_dilation": {
+    "zip_id": "1hpCGfGdu-wjB2oi0xFNzb-pF4-mWjbWi",
+    "metadata_id": "11sMDKM6INN98Yj4V4xsi5hVUc1im44y-",
+    "ext": "csv",
+    "classes": [
+      "normal",
+      "poor dilation"
+    ],
+    "rows": 3081,
+    "videos": 700,
+    "counts": {
+      "0": 2539,
+      "1": 542
+    },
+    "expected_hash": "9b0c350b53fcd39ed4044b86f993a9cfc8cff6323cb18f53792aa384cd621c18",
+    "xlsx_id": "1HVsqajW60MnE_7CqDXqShxPFdJ01X0aV",
+    "image_membership_sha256": "bd17fc10beb861eb8ea66d2eff80619f005690c435d7de8de095b0814af50f35",
+    "split_membership_sha256": "4f0a63672e4584d03a063a252705b3b8f005fd195e1bc59823429e4a9c8aa9fc"
+  }
+}

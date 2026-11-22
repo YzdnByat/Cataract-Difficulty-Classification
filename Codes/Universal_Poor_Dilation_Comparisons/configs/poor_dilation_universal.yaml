@@ -1,0 +1,49 @@
+# One paper protocol for all architectures. The notebook applies any common overrides here.
+task: poor_dilation
+model: ResNet50
+run:
+  name: poor_dilation_universal_448
+  output_dir: ../outputs
+  cache_dir: ../data_cache
+  gpu: '0,1'
+data:
+  images_zip: null
+  metadata: null
+training:
+  seed: 42
+  epochs: 30
+  batch_size: 32       # Target frames per optimizer update across both GPUs.
+  micro_batch: 16      # Physical GLOBAL batch. 8 per GPU, 2 passes per full update.
+  workers: 2
+  patience: 5
+  backbone_lr: 1.0e-05
+  head_lr: 1.0e-04
+  optimizer: AdamW
+  betas: [0.9, 0.999]
+  epsilon: 1.0e-08
+  scheduler: cosine
+  min_lr: 0.0           # Cosine period equals epochs; each parameter group starts at its own LR.
+  weight_decay: 0.01
+  sampler_power: 0.5   # Per-frame sampling weight proportional to training count ^ -power.
+  loss_power: 0.5      # Training CE only. Set 1.0 / 0.0 for the old sampler / loss.
+  tune_mode: all
+  tune_depth: 4        # Legacy metadata field. Unused during full fine-tuning.
+  l2_features: true
+preprocessing:
+  input_size: 448
+  interpolation: bicubic
+  normalization: imagenet
+  augmentation:
+    RandomResizedCrop: {scale: [0.80, 1.0], ratio: [0.9, 1.11], p: 1.0}
+    ShiftScaleRotate: {shift_limit: 0.05, scale_limit: 0, rotate_limit: 15, fill: 0, p: 0.7}
+    HorizontalFlip: {p: 0.5}
+    VerticalFlip: {p: 0.3}
+    ColorJitter: {brightness: 0.2, contrast: 0.2, saturation: 0.1, hue: 0.05, p: 0.8}
+  padding:
+    method: edge_blend
+    transition_fraction: 0.10
+    blur_radius: 2.0
+save:
+  epoch_predictions: true
+  test_originals: true
+  test_inputs: true
